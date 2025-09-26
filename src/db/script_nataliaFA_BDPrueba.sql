@@ -1,3 +1,5 @@
+-- Base de datos con flujo cerrado
+
 -- Crear base de datos
 CREATE DATABASE nataliaFacialArtist;
 USE nataliaFacialArtist;

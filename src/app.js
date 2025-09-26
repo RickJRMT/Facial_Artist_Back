@@ -7,7 +7,7 @@ const cors = require('cors');
 const app = express();
 // Crear una instancia de aplicación Express
 
-const imagenesRoutes = require('./backend/routes/imagenes.routes');
+const imagenesRoutes = require('../src/routes/imagenes.routes');
 // Importar las rutas para el manejo de imágenes desde el archivo correspondiente
 
 // Middleware
