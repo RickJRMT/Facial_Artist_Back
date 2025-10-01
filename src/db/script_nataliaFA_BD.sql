@@ -40,16 +40,25 @@ CREATE TABLE IF NOT EXISTS Cursos (
     FOREIGN KEY (idProfesional) REFERENCES Profesional(idProfesional)
 );
 
+CREATE TABLE Horarios (
+    idHorario INT AUTO_INCREMENT PRIMARY KEY,
+    dias VARCHAR(50),
+    horaInicio TIME,
+    horaFinal TIME
+);
+
 CREATE TABLE Cita (
     idCita INT AUTO_INCREMENT PRIMARY KEY,
     idCliente INT NOT NULL,
     idProfesional INT NOT NULL,
+    idHorario INT NOT NULL,
     fechaCita DATE NOT NULL,
     horaCita TIME NOT NULL,
     estadoCita ENUM('solicitada','confirmada','en curso','finalizada','cancelada') DEFAULT 'solicitada',
     estadoPago ENUM('pendiente','pagado') DEFAULT 'pendiente',
     FOREIGN KEY (idCliente) REFERENCES Cliente(idCliente),
-    FOREIGN KEY (idProfesional) REFERENCES Profesional(idProfesional)
+    FOREIGN KEY (idProfesional) REFERENCES Profesional(idProfesional),
+    FOREIGN KEY (idHorario) REFERENCES Horarios(idHorario)
 );
 
 CREATE TABLE Hv (
