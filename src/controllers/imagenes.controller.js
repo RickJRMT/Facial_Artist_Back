@@ -1,5 +1,5 @@
 // Importar la conexión a la base de datos desde el archivo de configuración
-const db = require('../config/db');
+const db = require('../config/conexion.db');
 
 // Crear la clase ImagenesController que manejará las operaciones relacionadas con imágenes
 class ImagenesController {

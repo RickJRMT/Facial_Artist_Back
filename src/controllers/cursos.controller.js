@@ -1,4 +1,4 @@
-const pool = require('./config/conexion.db');
+const pool = require('../config/conexion.db');
 
 const crearCurso = async (req, res) => {
     try {
