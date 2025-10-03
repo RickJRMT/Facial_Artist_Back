@@ -8,8 +8,13 @@ const app = express();
 // Crear una instancia de aplicación Express
 
 const imagenesRoutes = require('../src/routes/imagenes.routes');
-const cursosRoutes = require('../src/routes/cursos.routes');
 // Importar las rutas para el manejo de imágenes desde el archivo correspondiente
+
+const cursosRoutes = require('../src/routes/cursos.routes');
+// Importar las rutas para el manejo de cursos desde el archivo correspondiente
+
+const hvRoutes = require('../src/routes/hv.routes');
+// Importar las rutas para el manejo de hv desde el archivo correspondiente
 
 // Middleware
 app.use(cors());
@@ -26,6 +31,10 @@ app.use('/api/imagenes', imagenesRoutes);
 // Asocia todas las rutas de imágenes bajo el prefijo de /api/imagenes
 
 app.use('/api/cursos',cursosRoutes)
+// Asocia todas las rutas de cursos bajo el prefijo de /api/cursos
+
+app.use('/api/hv',hvRoutes)
+// Asocia todas las rutas de hv bajo el prefijo de /api/hv
 
 module.exports = app;
 // Exporta la app configurada para ser utilizada por el archivo principal del servidor (en este caso el archivo server.js)
