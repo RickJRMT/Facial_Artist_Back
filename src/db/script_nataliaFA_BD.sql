@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS Servicios (
 
 CREATE TABLE IF NOT EXISTS Cursos (
     idCurso INT AUTO_INCREMENT PRIMARY KEY,
-	idProfesional INT NOT NULL,
+    idProfesional INT NOT NULL,
     nombreCurso VARCHAR(100) NOT NULL,
     cursoDescripcion TEXT,
     cursoDuracion VARCHAR(50),
