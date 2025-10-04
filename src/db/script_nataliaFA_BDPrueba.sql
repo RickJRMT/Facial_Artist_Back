@@ -86,10 +86,14 @@ CREATE TABLE IF NOT EXISTS Profesional_Servicio (
 -- Horarios
 INSERT INTO Horarios (dias, horaInicio, horaFinal)
 VALUES 
-('Lunes a Viernes', '09:00:00', '18:00:00'),
+('Lunes', '09:00:00', '18:00:00'),
+('Martes', '09:00:00', '18:00:00'),
+('Miercoles', '09:00:00', '18:00:00'),
+('Jueves', '09:00:00', '18:00:00'),
+('Viernes', '09:00:00', '18:00:00'),
 ('Sábados', '10:00:00', '16:00:00'),
+('Lunes - Sabados', '11:00:00', '16:00:00'),
 ('Domingos - Cerrado', NULL, NULL),
-('Lunes a Viernes (tarde)', '14:00:00', '20:00:00');
 
 -- Clientes (originales 1-5 + nuevos 6-10)
 INSERT INTO Cliente (nombreCliente, celularCliente, fechaNacCliente)
