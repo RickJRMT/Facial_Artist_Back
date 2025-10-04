@@ -49,7 +49,7 @@ CREATE TABLE Horarios (
     horaFinal TIME
 );
 
-CREATE TABLE Cita (
+CREATE TABLE Citas (
     idCita INT AUTO_INCREMENT PRIMARY KEY,
     idCliente INT NOT NULL,
     idProfesional INT NOT NULL,
@@ -143,8 +143,8 @@ VALUES
 (6, 'Curso de Depilación Láser', 'Entrenamiento en uso de láser para tratamientos faciales.', '3 semanas', 450000.00),
 (1, 'Curso Actualizado de Microblading 2025', 'Versión actualizada con nuevas pigmentaciones.', '5 semanas', 550000.00);
 
--- Insertar Citas
-INSERT INTO Cita (idCliente, idProfesional, idHorario, fechaCita, horaCita, estadoCita, estadoPago)
+-- Insertar Citass
+INSERT INTO Citas (idCliente, idProfesional, idHorario, fechaCita, horaCita, estadoCita, estadoPago)
 VALUES 
 (1, 1, 1, '2025-10-03', '14:30:00', 'confirmada', 'pagado'),
 (2, 2, 1, '2025-10-04', '10:00:00', 'en curso', 'pagado'),
@@ -190,7 +190,7 @@ SELECT
     c.estadoCita,
     c.estadoPago
 FROM 
-    Cita c
+    Citas c
 JOIN 
     Cliente cl ON c.idCliente = cl.idCliente
 JOIN 
