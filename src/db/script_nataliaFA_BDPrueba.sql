@@ -1,5 +1,3 @@
--- Base de datos con flujo cerrado
-
 -- Crear base de datos
 CREATE DATABASE nataliaFacialArtist;
 USE nataliaFacialArtist;
@@ -70,7 +68,7 @@ CREATE TABLE Hv (
     hvFechaCreacion DATETIME DEFAULT CURRENT_TIMESTAMP,
     servDescripcion TEXT,
     hvImagen LONGBLOB,
-    FOREIGN KEY (idCita) REFERENCES Cita(idCita)
+    FOREIGN KEY (idCita) REFERENCES Citas(idCita)
 );
 
 CREATE TABLE IF NOT EXISTS Profesional_Servicio (
@@ -93,9 +91,9 @@ VALUES
 ('Viernes', '09:00:00', '18:00:00'),
 ('Sábados', '10:00:00', '16:00:00'),
 ('Lunes - Sabados', '11:00:00', '16:00:00'),
-('Domingos - Cerrado', NULL, NULL),
+('Domingos - Cerrado', NULL, NULL);
 
--- Clientes (originales 1-5 + nuevos 6-10)
+-- Clientes
 INSERT INTO Cliente (nombreCliente, celularCliente, fechaNacCliente)
 VALUES 
 ('Laura Pérez', '3001234567', '1992-05-10'),
@@ -109,7 +107,7 @@ VALUES
 ('Lucía Fernández', '3184445566', '1996-09-11'),
 ('Miguel Castro', '3195556677', '1991-02-28');
 
--- Profesionales (1-6)
+-- Profesionales
 INSERT INTO Profesional (nombreProfesional, correoProfesional, telefonoProfesional, contraProfesional)
 VALUES 
 ('Natalia Rodríguez', 'natalia@example.com', '3107654321', 'contrasena123'),
@@ -119,7 +117,7 @@ VALUES
 ('Elena Duarte', 'elena.duarte@example.com', '3227778899', 'elena456'),
 ('Roberto Silva', 'roberto.silva@example.com', '3238889900', 'roberto789');
 
--- Servicios (originales 1-6 + nuevos 7-9)
+-- Servicios
 INSERT INTO Servicios (servNombre, servDescripcion, servCosto)
 VALUES 
 ('Limpieza Facial Profunda', 'Elimina impurezas y células muertas con productos especializados.', 120000.00),
@@ -132,7 +130,7 @@ VALUES
 ('Depilación Láser Facial', 'Sesión de depilación láser para rostro, segura y efectiva.', 150000.00),
 ('Tratamiento Antiedad con Botox', 'Aplicación básica de botox para reducir arrugas finas.', 300000.00);
 
--- Cursos (originales 1-4 + nuevos 5-7)
+-- Cursos
 INSERT INTO Cursos (idProfesional, nombreCurso, cursoDescripcion, cursoDuracion, cursoCosto)
 VALUES 
 (1, 'Curso de Diseño de Cejas', 'Aprende técnicas profesionales para diseño y perfilado de cejas.', '3 semanas', 350000.00),
@@ -143,7 +141,7 @@ VALUES
 (6, 'Curso de Depilación Láser', 'Entrenamiento en uso de láser para tratamientos faciales.', '3 semanas', 450000.00),
 (1, 'Curso Actualizado de Microblading 2025', 'Versión actualizada con nuevas pigmentaciones.', '5 semanas', 550000.00);
 
--- Insertar Citass
+-- Insertar Citas
 INSERT INTO Citas (idCliente, idProfesional, idHorario, fechaCita, horaCita, estadoCita, estadoPago)
 VALUES 
 (1, 1, 1, '2025-10-03', '14:30:00', 'confirmada', 'pagado'),
@@ -161,7 +159,7 @@ VALUES
 (4, 'Estrés acumulado, masaje extendido 10 min extra.', 'Masaje Facial'),
 (5, 'Piel grasa, limpieza con control de sebo.', 'Limpieza Facial Express');
 
--- Profesional_Servicio (originales + nuevos, con IDs servicios correctos 1-9)
+-- Profesional_Servicio
 INSERT INTO Profesional_Servicio (idProfesional, idServicios)
 VALUES 
 (1, 1),
@@ -178,7 +176,7 @@ VALUES
 (3, 7),
 (4, 8);
 
--- Dashboard Query (actualizada, filtra desde hoy)
+-- Dashboard Query
 SELECT 
     c.idCita,
     c.fechaCita,

@@ -47,7 +47,7 @@ CREATE TABLE Horarios (
     horaFinal TIME
 );
 
-CREATE TABLE Cita (
+CREATE TABLE Citas (
     idCita INT AUTO_INCREMENT PRIMARY KEY,
     idCliente INT NOT NULL,
     idProfesional INT NOT NULL,
@@ -68,7 +68,7 @@ CREATE TABLE Hv (
     hvFechaCreacion DATETIME DEFAULT CURRENT_TIMESTAMP,
     servDescripcion TEXT,
     hvImagen LONGBLOB,
-    FOREIGN KEY (idCita) REFERENCES Cita(idCita)
+    FOREIGN KEY (idCita) REFERENCES Citas(idCita)
 );
 
 CREATE TABLE IF NOT EXISTS Profesional_Servicio (
