@@ -8,7 +8,7 @@ const CrudControllerCitas = require('../controllers/citas_cliente.controller');
 const crudCitas = new CrudControllerCitas();
 
 //se define el nombre de la tabla en la base de datos sobre la que se operará
-const tabla = 'cita';
+const tabla = 'Citas';
 
 //Se define el nombre del campo identificador único de la  tabla 
 const idCampo = 'idCita';
@@ -39,17 +39,15 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-
-//Ruta modificada para crear una nueva cita con cliente
 router.post('/', async (req, res) => {
     try {
         const nuevaCita = await crudCitas.crearCita(req.body);
         res.status(201).json(nuevaCita);
     } catch (error) {
+        console.error('Error en creación de cita:', error);
         res.status(500).json({ error: error.message });
     }
 });
-
 
 //Ruta para  actualizar una cita existente por id
 

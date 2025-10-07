@@ -39,5 +39,8 @@ app.use('/api/hv',hvRoutes)
 // asocia todas las rutas de citas con el prefijo de : "/api/citas"
 app.use('/api/citas', require('./routes/clientes.citas.routes'));
 
+// asocia todas las rutas de citas con el prefijo de : "/api/citas"
+app.use('/api/profesional', require('./routes/profesionales.routes'));
+
 module.exports = app;
 // Exporta la app configurada para ser utilizada por el archivo principal del servidor (en este caso el archivo server.js)

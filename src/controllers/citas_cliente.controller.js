@@ -46,7 +46,7 @@ class CrudControllerCitas {
             }
             // Insertar cita
             const [resCita] = await connection.query(
-                `INSERT INTO Cita (idCliente, idProfesional, idHorario, fechaCita, horaCita) VALUES (?, ?, ?, ?, ?)`,
+                `INSERT INTO Citas (idCliente, idProfesional, idHorario, fechaCita, horaCita) VALUES (?, ?, ?, ?, ?)`,
                 [idCliente, data.idProfesional, data.idHorario, data.fechaCita, data.horaCita]
             );
             // Esto finaliza la transacción y guarda todos los cambios realizados en la base de datos.
