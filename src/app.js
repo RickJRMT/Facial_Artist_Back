@@ -16,6 +16,12 @@ const cursosRoutes = require('../src/routes/cursos.routes');
 const hvRoutes = require('../src/routes/hv.routes');
 // Importar las rutas para el manejo de hv desde el archivo correspondiente
 
+const serviciosRoutes = require('../src/routes/servicios.routes');
+// Importar las rutas para el manejo de servicios desde el archivo correspondiente
+
+const horariosRoutes = require('../src/routes/horarios.routes');
+// Importar las rutas para el manejo de horarios desde el archivo correspondiente
+
 // Middleware
 app.use(cors());
 // Habilita los CORS (permite que el servidor reciba peticiones desde otros orígenes)
@@ -30,16 +36,22 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use('/api/imagenes', imagenesRoutes);
 // Asocia todas las rutas de imágenes bajo el prefijo de /api/imagenes
 
-app.use('/api/cursos',cursosRoutes)
+app.use('/api/cursos', cursosRoutes);
 // Asocia todas las rutas de cursos bajo el prefijo de /api/cursos
 
-app.use('/api/hv',hvRoutes)
+app.use('/api/hv', hvRoutes);
 // Asocia todas las rutas de hv bajo el prefijo de /api/hv
+
+app.use('/api/servicios', serviciosRoutes);
+// Asocia todas las rutas de servicios bajo el prefijo de /api/servicios
+
+app.use('/api/horarios', horariosRoutes);
+// Asoscia todas las rutas de servicios bajo el prefijo de /api/horarios
 
 // asocia todas las rutas de citas con el prefijo de : "/api/citas"
 app.use('/api/citas', require('./routes/clientes.citas.routes'));
 
-// asocia todas las rutas de citas con el prefijo de : "/api/citas"
+// asocia todas las rutas de profesionales con el prefijo de : "/api/profesionales"
 app.use('/api/profesional', require('./routes/profesionales.routes'));
 
 module.exports = app;
