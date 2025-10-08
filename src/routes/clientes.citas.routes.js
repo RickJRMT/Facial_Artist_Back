@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 
 const CrudControllerCitas = require('../controllers/citas_cliente.controller');
+const crudgenericoController = require('../controllers/crud.controller'); 
 
 // se crea una nueva instancia para utilizar los metodos 
 const crudCitas = new CrudControllerCitas();
@@ -18,7 +19,7 @@ const idCampo = 'idCita';
 router.get('/', async (req, res) => {
     try {
         //utilizar el método obtener todos los datos del controlador para obtener todos los registros 
-        const citas = await crudCitas.obtenerTodos(tabla);
+        const citas = await crudgenericoController.obtenerTabla(tabla); 
         //Respuesta con el arreglo de personas en formato JSON
         res.json(citas);
     } catch (error) {
@@ -30,7 +31,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     try {
-        const cita = await crudCitas.obtenerUno(tabla, idCampo, req.params.id);
+        const cita = await crudgenericoController.obtenerTablaId(tabla, idCampo, req.params.id);
         //respuesta con los datos de la cita en formato JSON 
         res.json(cita);
     } catch (error) {
@@ -49,11 +50,11 @@ router.post('/', async (req, res) => {
     }
 });
 
-//Ruta para  actualizar una cita existente por id
 
+//Ruta para  actualizar una cita existente por id
 router.put('/:id', async (req, res) => {
     try {
-        const citaActualizada = await crudCitas.actualizar(tabla, idCampo, req.params.id, req.body);
+        const citaActualizada = await crudgenericoController.actualizar(tabla, idCampo, req.params.id, req.body);
         //respuesta con el registro actualizado 
         res.json(citaActualizada);
     } catch (error) {
@@ -64,7 +65,7 @@ router.put('/:id', async (req, res) => {
 //ruta para eliminar una persona de la base de datos por id
 router.delete('/:id', async (req, res) => {
     try {
-        const resultado = await crudCitas.eliminar(tabla, idCampo, req.params.id);
+        const resultado = await  crudgenericoController.eliminar(tabla, idCampo, req.params.id);
         res.json(resultado);
     } catch (error) {
         res.status(500).json({ error: error.message });

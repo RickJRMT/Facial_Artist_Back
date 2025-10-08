@@ -11,11 +11,7 @@ router.use(express.urlencoded({ extended: true, limit: '50mb' }));
 router.get('/', async (req, res) => {
     try {
         const servicios = await ServiciosController.obtenerTodos();
-        res.json({ 
-            success: true, 
-            data: servicios,
-            count: servicios.length 
-        });
+        res.json (servicios);
     } catch (error) {
         console.error('Error al obtener Servicios:', error);
         res.status(500).json({ 
