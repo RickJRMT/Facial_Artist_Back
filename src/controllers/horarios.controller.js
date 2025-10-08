@@ -1,76 +1,61 @@
-const db = require('../config/conexion.db');
+// src/controllers/horarios.controller.js
+const Crud = require('./crud.controller'); // Importa el genérico
 
 class HorariosController {
-    // Obtener todos los registros de Horarios
-    async obtenerTodos() {
+    async obtenerTodos(req, res) {
         try {
-            const [resultado] = await db.query('SELECT * FROM Horarios');
-            return resultado;
+            const horarios = await Crud.obtenerTabla('Horarios');
+            res.json({ success: true, data: horarios, count: horarios.length });
         } catch (error) {
-            throw error;
+            console.error('Error al obtener Horarios:', error);
+            res.status(500).json({ success: false, message: 'Error interno del servidor' });
         }
     }
 
-    // Obtener un registro de Horarios por ID
-    async obtenerPorId(id) {
+    async obtenerPorId(req, res) {
         try {
-            const [resultado] = await db.query('SELECT * FROM Horarios WHERE idHorario = ?', [id]);
-            return resultado[0] || null;
+            const horario = await Crud.obtenerTablaId('Horarios', 'idHorario', req.params.id);
+            if (!horario) {
+                return res.status(404).json({ success: false, message: 'Registro no encontrado' });
+            }
+            res.json({ success: true, data: horario });
         } catch (error) {
-            throw error;
+            console.error('Error al obtener Horario por ID:', error);
+            res.status(500).json({ success: false, message: 'Error interno del servidor' });
         }
     }
 
-    // Crear un nuevo registro en Horarios
-    async crear(data) {
+    async crear(req, res) {
         try {
-            // Validar campos requeridos (opcional, pero recomendado)
-            if (!data.dias || !data.horaInicio || !data.horaFinal) {
-                throw new Error('Faltan campos requeridos: dias, horaInicio, horaFinal');
+            const { dias, horaInicio, horaFinal } = req.body;
+            if (!dias || !horaInicio || !horaFinal) {
+                return res.status(400).json({ success: false, message: 'Faltan campos requeridos' });
             }
-            const [resultado] = await db.query(
-                'INSERT INTO Horarios (dias, horaInicio, horaFinal) VALUES (?, ?, ?)',
-                [data.dias, data.horaInicio, data.horaFinal]
-            );
-            // Retorna el registro creado con el nuevo ID
-            const nuevoId = resultado.insertId;
-            return { ...data, idHorario: nuevoId };
+            const newHorario = await Crud.crear('Horarios', req.body);
+            res.status(201).json({ success: true, data: newHorario });
         } catch (error) {
-            throw error;
+            console.error('Error al crear Horario:', error);
+            res.status(400).json({ success: false, message: error.message || 'Error al crear' });
         }
     }
 
-    // Actualizar un registro en Horarios por ID
-    async actualizar(id, data) {
+    async actualizar(req, res) {
         try {
-            const existing = await this.obtenerPorId(id);
-            if (!existing) {
-                throw new Error('Registro no encontrado');
-            }
-            const [resultado] = await db.query(
-                'UPDATE Horarios SET dias = ?, horaInicio = ?, horaFinal = ? WHERE idHorario = ?',
-                [data.dias, data.horaInicio, data.horaFinal, id]
-            );
-            if (resultado.affectedRows === 0) {
-                throw new Error('No se pudo actualizar el registro');
-            }
-            // Retorna el registro actualizado
-            return await this.obtenerPorId(id);
+            const updatedHorario = await Crud.actualizar('Horarios', 'idHorario', req.params.id, req.body);
+            res.json({ success: true, data: updatedHorario });
         } catch (error) {
-            throw error;
+            console.error('Error al actualizar Horario:', error);
+            res.status(400).json({ success: false, message: error.message || 'Error al actualizar' });
         }
     }
 
-    // Eliminar un registro de Horarios por ID
-    async eliminar(id) {
+    async eliminar(req, res) {
         try {
-            const [resultado] = await db.query('DELETE FROM Horarios WHERE idHorario = ?', [id]);
-            if (resultado.affectedRows === 0) {
-                throw new Error('Registro no encontrado');
-            }
-            return { mensaje: 'Registro eliminado exitosamente' };
+            const result = await Crud.eliminar('Horarios', 'idHorario', req.params.id);
+            res.json({ success: true, message: result.mensaje });
         } catch (error) {
-            throw error;
+            console.error('Error al eliminar Horario:', error);
+            res.status(400).json({ success: false, message: error.message || 'Error al eliminar' });
         }
     }
 }
