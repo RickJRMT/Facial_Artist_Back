@@ -19,8 +19,8 @@ const hvRoutes = require('../src/routes/hv.routes');
 const serviciosRoutes = require('../src/routes/servicios.routes');
 // Importar las rutas para el manejo de servicios desde el archivo correspondiente
 
-const horariosRoutes = require('../src/routes/horarios.routes');
-// Importar las rutas para el manejo de horarios desde el archivo correspondiente
+// const horariosRoutes = require('../src/routes/horarios.routes');
+// // Importar las rutas para el manejo de horarios desde el archivo correspondiente
 
 // Middleware
 app.use(cors());
@@ -51,8 +51,8 @@ app.use('/api/hv', hvRoutes);
 app.use('/api/servicios', serviciosRoutes);
 // Asocia todas las rutas de servicios bajo el prefijo de /api/servicios
 
-app.use('/api/horarios', horariosRoutes);
-// Asoscia todas las rutas de servicios bajo el prefijo de /api/horarios
+// app.use('/api/horarios', horariosRoutes);
+// // Asoscia todas las rutas de servicios bajo el prefijo de /api/horarios
 
 // asocia todas las rutas de citas con el prefijo de : "/api/citas"
 app.use('/api/citas', require('./routes/clientes.citas.routes'));
