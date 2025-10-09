@@ -12,7 +12,6 @@ class CrudController {
     }
 
     async obtenerTablaId(tabla, idCampo, id) {
-
         try {
             const [resultado] = await db.query(`SELECT * FROM ?? WHERE ?? = ?`, [tabla, idCampo, id]);
             return resultado[0];
@@ -31,7 +30,6 @@ class CrudController {
     }
 
     async actualizar(tabla, idCampo, id, data) {
-
         try {
             const [resultado] = await db.query(`UPDATE ?? SET ? WHERE ?? = ?`, [tabla, data, idCampo, id]);
             if (resultado.affectedRows === 0) {
@@ -44,16 +42,14 @@ class CrudController {
     }
 
     async eliminar(tabla, idCampo, id) {
-        {
-            try {
-                const [resultado] = await db.query(`DELETE FROM ?? WHERE ?? = ?`, [tabla, idCampo, id]);
-                if (resultado.affectedRows === 0) {
-                    throw new Error('no se encuentra registro');
-                }
-                return { mensaje: 'registro eliminado' };
-            } catch (error) {
-                throw error;
+        try {
+            const [resultado] = await db.query(`DELETE FROM ?? WHERE ?? = ?`, [tabla, idCampo, id]);
+            if (resultado.affectedRows === 0) {
+                throw new Error('no se encuentra registro');
             }
+            return { mensaje: 'registro eliminado' };
+        } catch (error) {
+            throw error;
         }
     }
 }

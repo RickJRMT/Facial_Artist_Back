@@ -32,6 +32,12 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // Permite recibir datos codificados desde formularios (como los enviados por POST desde HTML), también con límite de 50MB
 
+// middleware de manejo de errores
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ succes: false, message: 'Error interno' });
+});
+
 // Rutas
 app.use('/api/imagenes', imagenesRoutes);
 // Asocia todas las rutas de imágenes bajo el prefijo de /api/imagenes

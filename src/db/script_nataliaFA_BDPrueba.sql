@@ -1,207 +1,306 @@
 -- Crear base de datos
-CREATE DATABASE nataliaFacialArtist;
+CREATE DATABASE IF NOT EXISTS nataliaFacialArtist;
+
 USE nataliaFacialArtist;
 
-CREATE TABLE IF NOT EXISTS Cliente (
-    idCliente INT AUTO_INCREMENT PRIMARY KEY,
-    nombreCliente VARCHAR(100) NOT NULL,
-    celularCliente VARCHAR(20) UNIQUE NOT NULL,
-    fechaNacCliente DATE,
-    fechaRegistro DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+-- Tabla Cliente
+CREATE TABLE
+    IF NOT EXISTS Cliente (
+        idCliente INT AUTO_INCREMENT PRIMARY KEY,
+        nombreCliente VARCHAR(100) NOT NULL,
+        celularCliente VARCHAR(20) UNIQUE NOT NULL,
+        fechaNacCliente DATE,
+        fechaRegistro DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
 
-CREATE TABLE IF NOT EXISTS Profesional (
-    idProfesional INT AUTO_INCREMENT PRIMARY KEY,
-    nombreProfesional VARCHAR(100) NOT NULL,
-    correoProfesional VARCHAR(100) NOT NULL,
-    telefonoProfesional VARCHAR(20) NOT NULL,
-    contraProfesional VARCHAR(50) NOT NULL,
-    fechaCreacionProf DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+-- Tabla Profesional
+CREATE TABLE
+    IF NOT EXISTS Profesional (
+        idProfesional INT AUTO_INCREMENT PRIMARY KEY,
+        nombreProfesional VARCHAR(100) NOT NULL,
+        correoProfesional VARCHAR(100) NOT NULL,
+        telefonoProfesional VARCHAR(20) NOT NULL,
+        contraProfesional VARCHAR(50) NOT NULL,
+        hora_inicio TIME NOT NULL,
+        hora_fin TIME NOT NULL,
+        fechaCreacionProf DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
 
-CREATE TABLE IF NOT EXISTS Servicios (
-    idServicios INT AUTO_INCREMENT PRIMARY KEY,
-    servNombre VARCHAR(100) NOT NULL,
-    servDescripcion TEXT,
-    servFechaCreacion DATETIME DEFAULT CURRENT_TIMESTAMP,
-    servCosto DECIMAL(10,2),
-    servImagen LONGBLOB
-);
+-- Tabla Servicios
+CREATE TABLE
+    IF NOT EXISTS Servicios (
+        idServicios INT AUTO_INCREMENT PRIMARY KEY,
+        servNombre VARCHAR(100) NOT NULL,
+        servDescripcion TEXT,
+        servFechaCreacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+        servCosto DECIMAL(10, 2),
+        servImagen LONGBLOB
+    );
 
-CREATE TABLE IF NOT EXISTS Cursos (
-    idCurso INT AUTO_INCREMENT PRIMARY KEY,
-    idProfesional INT NOT NULL,
-    nombreCurso VARCHAR(100) NOT NULL,
-    cursoDescripcion TEXT,
-    cursoDuracion VARCHAR(50),
-    cursoCosto DECIMAL(10,2),
-    cursoImagen LONGBLOB,
-    fechaCreacion DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (idProfesional) REFERENCES Profesional(idProfesional)
-);
+-- Tabla Cursos
+CREATE TABLE
+    IF NOT EXISTS Cursos (
+        idCurso INT AUTO_INCREMENT PRIMARY KEY,
+        nombreCurso VARCHAR(100) NOT NULL,
+        cursoDescripcion TEXT,
+        cursoDuracion VARCHAR(50),
+        cursoCosto DECIMAL(10, 2),
+        cursoImagen LONGBLOB,
+        fechaCreacion DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
 
-CREATE TABLE Horarios (
-    idHorario INT AUTO_INCREMENT PRIMARY KEY,
-    dias VARCHAR(50),
-    horaInicio TIME,
-    horaFinal TIME
-);
+-- Tabla Citas
+CREATE TABLE
+    IF NOT EXISTS Citas (
+        idCita INT AUTO_INCREMENT PRIMARY KEY,
+        idCliente INT NOT NULL,
+        idServicios INT NOT NULL,
+        fechaCita DATE NOT NULL,
+        horaCita TIME NOT NULL,
+        fin_cita TIME,
+        estadoPago ENUM ('pendiente', 'pagado') DEFAULT 'pendiente',
+        FOREIGN KEY (idCliente) REFERENCES Cliente (idCliente),
+        FOREIGN KEY (idServicios) REFERENCES Servicios (idServicios)
+    );
 
-CREATE TABLE Citas (
-    idCita INT AUTO_INCREMENT PRIMARY KEY,
-    idCliente INT NOT NULL,
-    idProfesional INT NOT NULL,
-    idHorario INT NOT NULL,
-    fechaCita DATE NOT NULL,
-    horaCita TIME NOT NULL,
-    estadoCita ENUM('solicitada','confirmada','en curso','finalizada','cancelada') DEFAULT 'solicitada',
-    estadoPago ENUM('pendiente','pagado') DEFAULT 'pendiente',
-    FOREIGN KEY (idCliente) REFERENCES Cliente(idCliente),
-    FOREIGN KEY (idProfesional) REFERENCES Profesional(idProfesional),
-    FOREIGN KEY (idHorario) REFERENCES Horarios(idHorario)
-);
+-- Tabla Hv
+CREATE TABLE
+    IF NOT EXISTS Hv (
+        idHv INT AUTO_INCREMENT PRIMARY KEY,
+        idCita INT NOT NULL UNIQUE,
+        hvDesc TEXT,
+        hvFechaCreacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+        hvImagen LONGBLOB,
+        FOREIGN KEY (idCita) REFERENCES Citas (idCita)
+    );
 
-CREATE TABLE Hv (
-    idHv INT AUTO_INCREMENT PRIMARY KEY,
-    idCita INT NOT NULL,
-    hvDesc TEXT,
-    hvFechaCreacion DATETIME DEFAULT CURRENT_TIMESTAMP,
-    servDescripcion TEXT,
-    hvImagen LONGBLOB,
-    FOREIGN KEY (idCita) REFERENCES Citas(idCita)
-);
+-- Tabla Profesional_Servicio
+CREATE TABLE
+    IF NOT EXISTS Profesional_Servicio (
+        idProfServ INT AUTO_INCREMENT PRIMARY KEY,
+        idProfesional INT NOT NULL,
+        idServicios INT NOT NULL,
+        FOREIGN KEY (idProfesional) REFERENCES Profesional (idProfesional),
+        FOREIGN KEY (idServicios) REFERENCES Servicios (idServicios)
+    );
 
-CREATE TABLE IF NOT EXISTS Profesional_Servicio (
-    idProfServ INT AUTO_INCREMENT PRIMARY KEY,
-    idProfesional INT,
-    idServicios INT,
-    FOREIGN KEY (idProfesional) REFERENCES Profesional(idProfesional),
-    FOREIGN KEY (idServicios) REFERENCES Servicios(idServicios)
-);
-
--- INSERTs en orden estricto (originales + nuevos)
-
--- Horarios
-INSERT INTO Horarios (dias, horaInicio, horaFinal)
-VALUES 
-('Lunes', '09:00:00', '18:00:00'),
-('Martes', '09:00:00', '18:00:00'),
-('Miercoles', '09:00:00', '18:00:00'),
-('Jueves', '09:00:00', '18:00:00'),
-('Viernes', '09:00:00', '18:00:00'),
-('Sábados', '10:00:00', '16:00:00'),
-('Lunes - Sabados', '11:00:00', '16:00:00'),
-('Domingos - Cerrado', NULL, NULL);
-
+-- --------------------------------------------------------
+-- INSERTS DE DATOS
+-- --------------------------------------------------------
 -- Clientes
-INSERT INTO Cliente (nombreCliente, celularCliente, fechaNacCliente)
-VALUES 
-('Laura Pérez', '3001234567', '1992-05-10'),
-('Carlos Martínez', '3012345678', '1987-08-22'),
-('Ana Torres', '3025551122', '1995-03-14'),
-('Julián Herrera', '3137896543', '1988-11-02'),
-('María López', '3149998877', '1990-01-25'),
-('Diego Ramírez', '3151112233', '1998-07-15'),
-('Valeria Sánchez', '3162223344', '1993-12-08'),
-('Andrés Vargas', '3173334455', '1985-04-20'),
-('Lucía Fernández', '3184445566', '1996-09-11'),
-('Miguel Castro', '3195556677', '1991-02-28');
+INSERT INTO
+    Cliente (nombreCliente, celularCliente, fechaNacCliente)
+VALUES
+    ('Laura Méndez', '3001234567', '1990-05-20'),
+    ('Carlos Ruiz', '3009876543', '1985-11-15'),
+    ('Ana Salazar', '3008889991', '1995-03-22'),
+    ('Miguel Herrera', '3011112233', '1989-07-30'),
+    ('Tatiana Ríos', '3014445566', '1992-12-10');
 
 -- Profesionales
-INSERT INTO Profesional (nombreProfesional, correoProfesional, telefonoProfesional, contraProfesional)
-VALUES 
-('Natalia Rodríguez', 'natalia@example.com', '3107654321', 'contrasena123'),
-('Sofía Gómez', 'sofia@example.com', '3119876543', 'pass456'),
-('Camila Ríos', 'camila.rios@example.com', '3208887766', 'camila123'),
-('Paula Mendoza', 'paula.mendoza@example.com', '3216665544', 'paula321'),
-('Elena Duarte', 'elena.duarte@example.com', '3227778899', 'elena456'),
-('Roberto Silva', 'roberto.silva@example.com', '3238889900', 'roberto789');
+INSERT INTO
+    Profesional (
+        nombreProfesional,
+        correoProfesional,
+        telefonoProfesional,
+        contraProfesional,
+        hora_inicio,
+        hora_fin
+    )
+VALUES
+    (
+        'Natalia Torres',
+        'natalia@facialartist.com',
+        '3101122334',
+        'n4t4l14',
+        '09:00:00',
+        '18:00:00'
+    ),
+    (
+        'Juliana Pérez',
+        'juliana@facialartist.com',
+        '3102233445',
+        'juli@123',
+        '10:00:00',
+        '17:00:00'
+    ),
+    (
+        'Andrea Gómez',
+        'andrea@facialartist.com',
+        '3103344556',
+        'andrea22',
+        '08:00:00',
+        '16:00:00'
+    );
 
 -- Servicios
-INSERT INTO Servicios (servNombre, servDescripcion, servCosto)
-VALUES 
-('Limpieza Facial Profunda', 'Elimina impurezas y células muertas con productos especializados.', 120000.00),
-('Diseño de Cejas', 'Perfilado y depilación de cejas con técnica personalizada.', 45000.00),
-('Microblading', 'Técnica semipermanente para cejas perfectas.', 250000.00),
-('Peeling Químico', 'Tratamiento para renovar la piel y reducir manchas.', 180000.00),
-('Masaje Facial', 'Estimula circulación y relaja músculos faciales.', 80000.00),
-('Limpieza Facial Express', 'Limpieza rápida para pieles normales.', 60000.00),
-('Hidratación Facial con Ácido Hialurónico', 'Tratamiento intensivo de hidratación profunda para piel seca.', 95000.00),
-('Depilación Láser Facial', 'Sesión de depilación láser para rostro, segura y efectiva.', 150000.00),
-('Tratamiento Antiedad con Botox', 'Aplicación básica de botox para reducir arrugas finas.', 300000.00);
-
--- Cursos
-INSERT INTO Cursos (idProfesional, nombreCurso, cursoDescripcion, cursoDuracion, cursoCosto)
-VALUES 
-(1, 'Curso de Diseño de Cejas', 'Aprende técnicas profesionales para diseño y perfilado de cejas.', '3 semanas', 350000.00),
-(2, 'Curso de Microblading', 'Técnicas modernas para microblading en cejas.', '4 semanas', 500000.00),
-(3, 'Curso Peeling Avanzado', 'Curso profesional de aplicación de peeling químico.', '2 semanas', 400000.00),
-(4, 'Curso Masajes Faciales', 'Aprende técnicas de masaje facial relajante y terapéutico.', '1 semana', 250000.00),
-(5, 'Curso de Hidratación Facial', 'Técnicas avanzadas de hidratación con sérums y máscaras.', '2 semanas', 300000.00),
-(6, 'Curso de Depilación Láser', 'Entrenamiento en uso de láser para tratamientos faciales.', '3 semanas', 450000.00),
-(1, 'Curso Actualizado de Microblading 2025', 'Versión actualizada con nuevas pigmentaciones.', '5 semanas', 550000.00);
-
--- Insertar Citas
-INSERT INTO Citas (idCliente, idProfesional, idHorario, fechaCita, horaCita, estadoCita, estadoPago)
-VALUES 
-(1, 1, 1, '2025-10-03', '14:30:00', 'confirmada', 'pagado'),
-(2, 2, 1, '2025-10-04', '10:00:00', 'en curso', 'pagado'),
-(3, 3, 1, '2025-10-05', '09:30:00', 'finalizada', 'pagado'),
-(4, 4, 2, '2025-10-06', '11:00:00', 'solicitada', 'pendiente'),
-(5, 1, 1, '2025-10-07', '13:00:00', 'confirmada', 'pendiente');
-
--- Insertar HV (hoja de vida profesional de la cita)
-INSERT INTO Hv (idCita, hvDesc, servDescripcion)
-VALUES 
-(1, 'Piel mixta, se aplicó limpieza con enfoque en zona T.', 'Limpieza Facial Profunda'),
-(2, 'Cejas irregulares, diseño asimétrico corregido.', 'Diseño de Cejas'),
-(3, 'Piel madura con manchas, peeling moderado.', 'Peeling Químico'),
-(4, 'Estrés acumulado, masaje extendido 10 min extra.', 'Masaje Facial'),
-(5, 'Piel grasa, limpieza con control de sebo.', 'Limpieza Facial Express');
+INSERT INTO
+    Servicios (servNombre, servDescripcion, servCosto)
+VALUES
+    (
+        'Limpieza facial profunda',
+        'Tratamiento para limpiar impurezas y puntos negros',
+        85000.00
+    ),
+    (
+        'Microblading de cejas',
+        'Técnica semipermanente para diseño de cejas',
+        120000.00
+    ),
+    (
+        'Masaje relajante',
+        'Masaje terapéutico para reducir el estrés',
+        60000.00
+    ),
+    (
+        'Peeling químico',
+        'Eliminación de células muertas con ácidos suaves',
+        95000.00
+    ),
+    (
+        'Terapia con luz LED',
+        'Tratamiento rejuvenecedor con luz roja y azul',
+        70000.00
+    );
 
 -- Profesional_Servicio
-INSERT INTO Profesional_Servicio (idProfesional, idServicios)
-VALUES 
-(1, 1),
-(1, 2),
-(2, 2),
-(2, 3),
-(3, 4),
-(4, 5),
-(1, 6),
-(2, 6),
-(5, 7),
-(6, 8),
-(1, 9),
-(3, 7),
-(4, 8);
+INSERT INTO
+    Profesional_Servicio (idProfesional, idServicios)
+VALUES
+    (1, 1),
+    (1, 2),
+    (1, 4),
+    (2, 3),
+    (2, 5),
+    (3, 1),
+    (3, 3),
+    (3, 4);
 
--- Dashboard Query
-SELECT 
-    c.idCita,
-    c.fechaCita,
-    c.horaCita,
-    cl.nombreCliente,
-    p.nombreProfesional,
-    GROUP_CONCAT(DISTINCT s.servNombre SEPARATOR ', ') AS serviciosDisponibles,
-    COALESCE(h.servDescripcion, 'Por asignar') AS servicioElegido,
-    c.estadoCita,
-    c.estadoPago
-FROM 
-    Citas c
-JOIN 
-    Cliente cl ON c.idCliente = cl.idCliente
-JOIN 
-    Profesional p ON c.idProfesional = p.idProfesional
-LEFT JOIN 
-    Profesional_Servicio ps ON p.idProfesional = ps.idProfesional
-LEFT JOIN 
-    Servicios s ON ps.idServicios = s.idServicios
-LEFT JOIN 
-    Hv h ON c.idCita = h.idCita
-WHERE 
-    c.fechaCita >= '2025-10-03'
-GROUP BY 
-    c.idCita, cl.nombreCliente, p.nombreProfesional, h.servDescripcion, c.estadoCita, c.estadoPago
-ORDER BY 
-    c.fechaCita DESC, c.horaCita ASC;
+-- Cursos
+INSERT INTO
+    Cursos (
+        nombreCurso,
+        cursoDescripcion,
+        cursoDuracion,
+        cursoCosto
+    )
+VALUES
+    (
+        'Curso de limpieza facial',
+        'Aprende técnicas profesionales de limpieza facial',
+        '4 semanas',
+        250000.00
+    ),
+    (
+        'Curso de microblading',
+        'Capacitación intensiva en microblading',
+        '6 semanas',
+        400000.00
+    ),
+    (
+        'Curso de masaje facial',
+        'Masajes relajantes y drenaje linfático facial',
+        '3 semanas',
+        180000.00
+    );
+
+-- Citas
+INSERT INTO
+    Citas (
+        idCliente,
+        idServicios,
+        fechaCita,
+        horaCita,
+        fin_cita,
+        estadoPago
+    )
+VALUES
+    (
+        1,
+        1,
+        '2025-10-10',
+        '10:00:00',
+        '11:00:00',
+        'pendiente'
+    ),
+    (
+        2,
+        3,
+        '2025-10-12',
+        '15:00:00',
+        '16:00:00',
+        'pagado'
+    ),
+    (
+        3,
+        2,
+        '2025-10-15',
+        '13:00:00',
+        '14:30:00',
+        'pendiente'
+    ),
+    (
+        4,
+        4,
+        '2025-10-16',
+        '11:00:00',
+        '12:00:00',
+        'pagado'
+    ),
+    (
+        5,
+        5,
+        '2025-10-17',
+        '09:30:00',
+        '10:30:00',
+        'pagado'
+    ),
+    (
+        1,
+        3,
+        '2025-10-18',
+        '14:00:00',
+        '15:00:00',
+        'pendiente'
+    ),
+    (
+        2,
+        1,
+        '2025-10-19',
+        '10:00:00',
+        '11:00:00',
+        'pendiente'
+    );
+
+-- Hv (Hoja de Vida de Citas)
+INSERT INTO
+    Hv (idCita, hvDesc)
+VALUES
+    (
+        1,
+        'Piel con impurezas. Se aplicó exfoliación mecánica y mascarilla de carbón activado.'
+    ),
+    (
+        2,
+        'Masaje relajante completo. Paciente presentó leve tensión en la espalda.'
+    ),
+    (
+        3,
+        'Microblading realizado con pigmento natural. Buen resultado.'
+    ),
+    (
+        4,
+        'Peeling químico suave. Ligero enrojecimiento posterior al tratamiento.'
+    ),
+    (
+        5,
+        'Sesión de luz LED roja para rejuvenecimiento. Cliente satisfecho.'
+    ),
+    (
+        6,
+        'Masaje facial con aceites esenciales. Mejoró elasticidad de la piel.'
+    ),
+    (
+        7,
+        'Limpieza profunda con extracción manual y vapor ozono.'
+    );
