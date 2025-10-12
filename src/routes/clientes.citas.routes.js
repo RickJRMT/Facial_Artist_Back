@@ -72,4 +72,15 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
+// Se creará esté endpoint para obtener los horarios disponibles 
+router.post('/disponibilidad', async (req, res) => {
+  try {
+    const horarios = await crudCitas.obtenerHorariosDisponibles(req.body);
+    res.json(horarios);
+  } catch (error) {
+    console.error('Error al obtener horarios disponibles:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router; 
