@@ -1,0 +1,1 @@
+npm install @fullcalendar/react @fullcalendar/daygrid @fullcalendar/timegrid @fullcalendar/list @fullcalendar/interaction antd axios moment
