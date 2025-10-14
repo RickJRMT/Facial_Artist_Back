@@ -1,4 +1,8 @@
 -- Crear base de datos
+
+-- esta base de datos la estoy utilizando para todo el agendamiento de citas, la versión 2 es para una prueba
+
+
 CREATE DATABASE IF NOT EXISTS nataliaFacialArtist;
 USE nataliaFacialArtist;
 
