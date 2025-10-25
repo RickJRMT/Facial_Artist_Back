@@ -14,26 +14,25 @@ class HorariosController {
         }
     }
 
+    // GET (corregido con logs extra)
     static async getHorariosByProfesional(req, res) {
         try {
-            const { id } = req.params; // ← Aquí está el problema si no llega
-            console.log('DEBUG GET Horarios - req.params:', req.params); // ← LOG CLAVE
-
-            if (!id) {
-                return res.status(400).json({ error: 'Falta ID de profesional' });
-            }
+            const { id } = req.params; // ← FIX: 'id' de la ruta /:id
+            console.log('DEBUG BACKEND GET: id recibido:', id, 'Tipo:', typeof id); // Log para debug
 
             const idProfesional = Number(id);
-            if (isNaN(idProfesional)) {
+            if (!id || isNaN(idProfesional)) {
+                console.log('DEBUG BACKEND: Validación falló - id inválido'); // Log
                 return res.status(400).json({ error: 'ID de profesional inválido' });
             }
+            console.log('DEBUG BACKEND: idProfesional válido:', idProfesional); // Log
 
             const query = `
-            SELECT idHorario, fecha, hora_inicio, hora_fin, estado 
-            FROM Horarios 
-            WHERE idProfesional = ? 
-            ORDER BY fecha, hora_inicio
-        `;
+                SELECT idHorario, fecha, hora_inicio, hora_fin, estado 
+                FROM Horarios 
+                WHERE idProfesional = ? 
+                ORDER BY fecha, hora_inicio
+            `;
             const [results] = await db.execute(query, [idProfesional]);
 
             const eventos = results.map(row => ({
@@ -45,6 +44,7 @@ class HorariosController {
                 borderColor: row.estado === 'activo' ? '#28a745' : '#dc3545'
             }));
 
+            console.log('DEBUG BACKEND: Resultados encontrados:', results.length); // Log
             res.json({ horarios: results, eventosParaCalendario: eventos });
         } catch (error) {
             console.error('Error al obtener horarios:', error);
@@ -52,10 +52,10 @@ class HorariosController {
         }
     }
 
-    // POST (con log)
+    // POST (sin cambios, pero con log)
     static async createHorario(req, res) {
         try {
-            console.log('DEBUG POST: Body recibido:', req.body); // LOG TEMPORAL
+            console.log('DEBUG BACKEND POST: Body recibido:', req.body); // Log
             const { idProfesional, fecha, hora_inicio, hora_fin, estado = 'activo' } = req.body;
             HorariosController.#validarInputs(idProfesional, fecha, hora_inicio, hora_fin, estado);
 
@@ -77,7 +77,7 @@ class HorariosController {
             `;
             const [result] = await db.execute(insertQuery, [idProfesional, fecha, hora_inicio, hora_fin, estado]);
 
-            console.log('DEBUG: Horario creado con ID:', result.insertId); // LOG
+            console.log('DEBUG BACKEND: Horario creado con ID:', result.insertId); // Log
             res.status(201).json({ message: 'Horario creado exitosamente', id: result.insertId });
         } catch (error) {
             console.error('Error al crear horario:', error);
@@ -85,14 +85,15 @@ class HorariosController {
         }
     }
 
-    // PUT (con log)
+    // PUT (corregido con { id } y logs)
     static async updateHorario(req, res) {
         try {
-            console.log('DEBUG PUT: Params y Body:', req.params, req.body); // LOG TEMPORAL
-            const { idHorario } = req.params;
+            console.log('DEBUG BACKEND PUT: Params y Body:', req.params, req.body); // Log
+            const { id } = req.params; // ← FIX: 'id' de la ruta /:id
+            const idHorario = Number(id);
             const { idProfesional, fecha, hora_inicio, hora_fin, estado } = req.body;
 
-            if (!idHorario || isNaN(Number(idHorario))) {
+            if (!id || isNaN(idHorario)) {
                 return res.status(400).json({ error: 'ID de horario inválido' });
             }
 
@@ -126,14 +127,14 @@ class HorariosController {
             }
 
             const query = `UPDATE Horarios SET ${updates.join(', ')} WHERE idHorario = ?`;
-            params.push(Number(idHorario));
+            params.push(idHorario);
 
             const [result] = await db.execute(query, params);
             if (result.affectedRows === 0) {
                 return res.status(404).json({ error: 'Horario no encontrado' });
             }
 
-            console.log('DEBUG: Horario actualizado:', result.affectedRows); // LOG
+            console.log('DEBUG BACKEND: Horario actualizado:', result.affectedRows); // Log
             res.json({ message: 'Horario actualizado exitosamente' });
         } catch (error) {
             console.error('Error al actualizar horario:', error);
@@ -142,4 +143,4 @@ class HorariosController {
     }
 }
 
-module.exports = HorariosController; // Exporta la CLASE (métodos estáticos)
+module.exports = HorariosController;

@@ -1,7 +1,6 @@
 const db = require('../config/conexion.db');
 
 class CitasProfesionalController {
-    // GET: Citas por profesional (para calendario)
     static async getCitasByProfesional(req, res) {
         try {
             const { id } = req.params;
@@ -20,27 +19,34 @@ class CitasProfesionalController {
             `;
             const [results] = await db.execute(query, [idProfesional]);
 
-            // Formatear para FullCalendar
-            const eventosCitas = results.map(row => ({
-                id: row.idCita,
-                title: `${row.nombreProfesional} - ${row.descripcionServicio}`, // Solo nombre pro + servicio, como pediste
-                start: `${row.fechaCita}T${row.horaCita}`,
-                backgroundColor: row.estadoCita === 'confirmada' ? '#28a745' : '#ffc107', // Verde confirmada, amarillo pendiente
-                borderColor: row.estadoCita === 'confirmada' ? '#28a745' : '#ffc107',
-                extendedProps: { estado: row.estadoCita } // Para detalles extras si hace falta
-            }));
-
-            res.json({ citas: results, eventosParaCalendario: eventosCitas });
+            res.json({ citas: results, eventosParaCalendario: [] }); // Raw para mapping en frontend
         } catch (error) {
             console.error('Error al obtener citas por profesional:', error);
             res.status(500).json({ error: 'Error en la base de datos' });
         }
     }
 
-    // GET: Estadísticas globales de citas (total, pendientes, confirmadas)
+    // ← NUEVO: All citas (sin filtro pro)
+    static async getAllCitas(req, res) {
+        try {
+            const query = `
+                SELECT c.idCita, c.fechaCita, c.horaCita, c.estadoCita, s.servNombre as descripcionServicio, p.nombreProfesional
+                FROM Citas c
+                JOIN Servicios s ON c.idServicios = s.idServicios
+                JOIN Profesional p ON c.idProfesional = p.idProfesional
+                ORDER BY c.fechaCita, c.horaCita
+            `;
+            const [results] = await db.execute(query);
+
+            res.json({ citas: results, eventosParaCalendario: [] }); // Raw
+        } catch (error) {
+            console.error('Error al obtener todas citas:', error);
+            res.status(500).json({ error: 'Error en la base de datos' });
+        }
+    }
+
     static async getEstadisticasCitas(req, res) {
         try {
-            // Opcional: Filtrar por idProfesional si pasas ?id=1 en query params
             const { id } = req.query;
             const whereClause = id ? 'WHERE idProfesional = ?' : '';
             const params = id ? [Number(id)] : [];

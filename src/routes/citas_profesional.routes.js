@@ -5,6 +5,9 @@ const CitasProfesionalController = require('../controllers/citas_profesional.con
 // GET /api/citas-profesional/profesional/:id
 router.get('/profesional/:id', CitasProfesionalController.getCitasByProfesional);
 
+// GET /all (todas citas, sin filtro pro)
+router.get('/all', CitasProfesionalController.getAllCitas);
+
 // GET /api/citas-profesional/stats (opcional ?id=1 para filtrar por pro)
 router.get('/stats', CitasProfesionalController.getEstadisticasCitas);
 
