@@ -3,10 +3,6 @@ const express = require('express');
 const router = express.Router();
 const ServiciosController = require('../controllers/servicios.controller');
 
-// Middleware para parsear JSON (y archivos para BLOBs como servImagen)
-router.use(express.json({ limit: '50mb' })); // Límite alto para Base64 grandes
-router.use(express.urlencoded({ extended: true, limit: '50mb' }));
-
 // GET /api/servicios - Obtener todos los registros de Servicios
 router.get('/', async (req, res) => {
     try {
