@@ -41,11 +41,19 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
     try {
         // Validar campos requeridos
-        const { servNombre, servDescripcion, servCosto } = req.body;
+        const { servNombre, servDescripcion, servCosto, servDuracion } = req.body;
         if (!servNombre || !servDescripcion || !servCosto) {
             return res.status(400).json({ 
                 success: false, 
                 message: 'Faltan campos requeridos: servNombre, servDescripcion, servCosto' 
+            });
+        }
+        
+        // Validar que la duración sea un número positivo
+        if (servDuracion && (isNaN(servDuracion) || servDuracion <= 0)) {
+            return res.status(400).json({
+                success: false,
+                message: 'La duración del servicio debe ser un número positivo de minutos'
             });
         }
 
