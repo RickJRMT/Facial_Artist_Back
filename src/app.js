@@ -60,8 +60,5 @@ app.use('/api/citas', require('./routes/clientes.citas.routes'));
 // asocia todas las rutas de profesionales con el prefijo de : "/api/profesionales"
 app.use('/api/profesional', require('./routes/profesionales.routes'));
 
-//Del modulo de "profesionales" para el apartado de "citas" traeremos todos sus detalles 
-app.use('/api/adminCitas', require('./routes/admin.citas.routes')); 
-
 module.exports = app;
 // Exporta la app configurada para ser utilizada por el archivo principal del servidor (en este caso el archivo server.js)
