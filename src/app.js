@@ -60,6 +60,9 @@ app.use('/api/citas', require('./routes/clientes.citas.routes'));
 // asocia todas las rutas de profesionales con el prefijo de : "/api/profesionales"
 app.use('/api/profesional', require('./routes/profesionales.routes'));
 
+//Del modulo de "profesionales" para el apartado de "citas" traeremos todos sus detalles 
+app.use('/api/adminCitas', require('./routes/admin.citas.routes'));
+
 app.use('/api/horarios', require('./routes/horarios.route'));
 
 app.use('/api/citas-profesional', require('./routes/citas_profesional.routes'));
