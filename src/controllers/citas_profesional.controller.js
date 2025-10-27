@@ -12,7 +12,7 @@ class CitasProfesionalController {
                 ORDER BY c.fechaCita, c.horaCita
             `;
             const [results] = await db.execute(query);
-            console.log('DEBUG BACKEND All Citas: Raw results from DB:', results.length);
+            console.log('DEBUG BACKEND All Citas: Raw results:', results.length);
 
             const eventosCitas = results
                 .filter(row => row.fechaCita && row.horaCita)
@@ -27,22 +27,22 @@ class CitasProfesionalController {
                     const endDate = new Date(startDate.getTime() + row.servDuracion * 60 * 1000);
                     const endStr = endDate.toTimeString().slice(0, 5);
                     const endFullStr = `${fechaStr}T${endStr}`;
-                    const className = row.estadoCita === 'confirmada' ? 'cita-confirmada' :
-                        row.estadoCita === 'cancelada' ? 'cita-cancelada' : 'cita-pendiente';
+                    const className = row.estadoCita === 'confirmada' ? 'gh-cita-confirmada' :
+                        row.estadoCita === 'cancelada' ? 'gh-cita-cancelada' : 'gh-cita-agendada';
                     const evento = {
                         id: row.idCita,
-                        title: `${row.nombreProfesional} - ${row.descripcionServicio}`,
+                        title: row.nombreProfesional, // ← FIX: Solo nombre pro para cita
                         start: startStr,
                         end: endFullStr,
                         classNames: [className],
                         backgroundColor: row.estadoCita === 'confirmada' ? '#28a745' :
-                            row.estadoCita === 'cancelada' ? '#dc3545' : '#ffc107',
+                            row.estadoCita === 'cancelada' ? '#dc3545' : '#28a745', // Verde para agendada
                         borderColor: row.estadoCita === 'confirmada' ? '#28a745' :
-                            row.estadoCita === 'cancelada' ? '#dc3545' : '#ffc107',
+                            row.estadoCita === 'cancelada' ? '#dc3545' : '#28a745',
                         extendedProps: {
                             estado: row.estadoCita,
                             nombreProfesional: row.nombreProfesional,
-                            descripcionServicio: row.descripcionServicio
+                            descripcionServicio: row.descripcionServicio // Para tabla
                         }
                     };
                     console.log('DEBUG BACKEND All Citas: Evento mapeado:', evento);

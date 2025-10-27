@@ -33,11 +33,11 @@ class HorariosController {
                         console.warn('DEBUG BACKEND All Horarios: Fecha inválida:', row);
                         return null;
                     }
-                    const className = row.estado === 'activo' ? 'horario-activo' : 'horario-inactivo';
+                    const className = row.estado === 'activo' ? 'gh-horario-activo' : 'gh-horario-inactivo';
                     const estadoText = row.estado === 'activo' ? 'Activo' : 'Inactivo';
                     const evento = {
                         id: row.idHorario,
-                        title: `${row.nombreProfesional} - ${estadoText}`, // ← FIX: Pro + estado
+                        title: `${row.nombreProfesional} - ${estadoText}`, // Nombre + estado para bloque
                         start: startStr,
                         end: `${row.fecha}T${row.hora_fin}`,
                         classNames: [className],
@@ -99,21 +99,23 @@ class HorariosController {
             console.log('DEBUG BACKEND: idProfesional válido:', idProfesional);
 
             const query = `
-                SELECT idHorario, fecha, hora_inicio, hora_fin, estado 
-                FROM Horarios 
-                WHERE idProfesional = ? 
+                SELECT idHorario, fecha, hora_inicio, hora_fin, estado, p.nombreProfesional
+                FROM Horarios h
+                JOIN Profesional p ON h.idProfesional = p.idProfesional
+                WHERE h.idProfesional = ? 
                 ORDER BY fecha, hora_inicio
             `;
             const [results] = await db.execute(query, [idProfesional]);
 
             const eventos = results.map(row => ({
                 id: row.idHorario,
-                title: row.estado === 'activo' ? `Disponible - ${row.hora_inicio} a ${row.hora_fin}` : 'Agenda Cerrada',
+                title: `${row.nombreProfesional} - ${row.estado === 'activo' ? 'Activo' : 'Inactivo'}`,
                 start: `${row.fecha}T${row.hora_inicio}`,
                 end: `${row.fecha}T${row.hora_fin}`,
-                classNames: [row.estado === 'activo' ? 'horario-activo' : 'horario-inactivo'],
+                classNames: [row.estado === 'activo' ? 'gh-horario-activo' : 'gh-horario-inactivo'],
                 backgroundColor: row.estado === 'activo' ? '#28a745' : '#dc3545',
-                borderColor: row.estado === 'activo' ? '#28a745' : '#dc3545'
+                borderColor: row.estado === 'activo' ? '#28a745' : '#dc3545',
+                extendedProps: { estado: row.estado, nombreProfesional: row.nombreProfesional }
             }));
 
             console.log('DEBUG: Resultados encontrados:', results.length);
