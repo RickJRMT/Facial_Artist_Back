@@ -60,7 +60,27 @@ class CrudControllerCitas {
             const finCitaMoment = horaCitaMoment.clone().add(duracionMinutos, 'minutes'); // Clonamos la hora y le sumamos la duración
             const finCita = finCitaMoment.format('HH:mm:ss'); // Convertimos el objeto moment de fin de cita a formato 'HH:mm:ss'
 
-            // Validamos si el horario solicitado para la cita ya está ocupado
+            // NUEVO: VALIDACIÓN CRUZADA - Chequear overlaps con Horarios INACTIVOS
+            const checkHorarioQuery = `
+                SELECT COUNT(*) as count 
+                FROM Horarios h 
+                WHERE h.idProfesional = ? AND DATE(h.fecha) = ? 
+                AND h.estado = 'inactivo'
+                AND ((h.hora_inicio < ? AND h.hora_fin > ?) OR 
+                     (h.hora_inicio >= ? AND h.hora_inicio < ?))
+            `;
+            const [checkHorarioResult] = await connection.query(checkHorarioQuery, [
+                data.idProfesional,
+                data.fechaCita,
+                finCita, data.horaCita,  // Overlap: inicio < fin_cita AND fin > inicio_cita
+                data.horaCita, finCita
+            ]);
+            if (checkHorarioResult[0].count > 0) {
+                console.log('DEBUG BACKEND crearCita: Bloqueado por horario inactivo');
+                throw new Error('No se puede agendar: El profesional tiene agenda cerrada (inactivo) en este horario. Elige otro slot o fecha.');
+            }
+
+            // Validamos si el horario solicitado para la cita ya está ocupado (citas existentes)
             const [citas] = await connection.query(
                 `SELECT * FROM Citas WHERE idProfesional = ? AND fechaCita = ? AND fin_cita IS NOT NULL AND (
                     (horaCita < ? AND fin_cita > ?)
@@ -114,6 +134,12 @@ class CrudControllerCitas {
             if (!moment(fechaCita, 'YYYY-MM-DD', true).isValid()) {
                 throw new Error('Formato de fechaCita inválido, debe ser YYYY-MM-DD');
             }
+
+            // NUEVO: Obtener rangos INACTIVOS para excluirlos después
+            const [horariosInactivos] = await connection.query(
+                `SELECT hora_inicio, hora_fin FROM Horarios WHERE idProfesional = ? AND fecha = ? AND estado = 'inactivo' ORDER BY hora_inicio`,
+                [idProfesional, fechaCita]
+            );
 
             // Consultamos los horarios disponibles para el profesional en la fecha solicitada
             const [horarios] = await connection.query(
@@ -182,6 +208,23 @@ class CrudControllerCitas {
                 // Si el slot de fin es mayor que el horario de fin, o menor que el inicio, salimos del bucle
                 if (slotFin > horaFin || slotFin <= slotInicio) break;
 
+                // NUEVO: Validar que el slot NO overlap con horarios INACTIVOS
+                let overlapInactivo = false;
+                for (const inactivo of horariosInactivos) {
+                    const inactivoInicio = moment(`${fechaCita} ${inactivo.hora_inicio}`, 'YYYY-MM-DD HH:mm:ss');
+                    const inactivoFin = moment(`${fechaCita} ${inactivo.hora_fin}`, 'YYYY-MM-DD HH:mm:ss');
+                    // Overlap si: slotInicio < inactivoFin AND slotFin > inactivoInicio
+                    if (slotInicio.isBefore(inactivoFin) && slotFin.isAfter(inactivoInicio)) {
+                        overlapInactivo = true;
+                        console.log(`DEBUG BACKEND slots: Slot ${slotInicio.format('HH:mm')} bloqueado por inactivo ${inactivo.hora_inicio}-${inactivo.hora_fin}`);
+                        break;
+                    }
+                }
+                if (overlapInactivo) {
+                    // Salta este slot inválido
+                    current.add(duracionMinutos, 'minutes');
+                    continue;
+                }
 
                 // Validamos que no haya citas que ya ocupen el horario propuesto
                 const [citas] = await connection.query(
