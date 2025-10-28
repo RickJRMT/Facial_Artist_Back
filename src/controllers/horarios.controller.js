@@ -1,4 +1,5 @@
 const db = require('../config/conexion.db');
+const moment = require('moment'); // Para manejo local de fechas
 
 class HorariosController {
     static #validarInputs(idProfesional, fecha, hora_inicio, hora_fin, estado) {
@@ -27,29 +28,33 @@ class HorariosController {
             const eventosHorarios = results
                 .filter(row => row.fecha && row.hora_inicio)
                 .map(row => {
-                    const startStr = `${row.fecha}T${row.hora_inicio}`;
-                    const startDate = new Date(startStr);
+                    // FIX: Usar Moment para local time (evita merma de día)
+                    const fechaLocal = moment(row.fecha).local().format('YYYY-MM-DD');
+                    const startStr = `${fechaLocal}T${row.hora_inicio}`;
+                    const endStr = `${fechaLocal}T${row.hora_fin}`;
+                    const startDate = moment(startStr).toDate(); // Local parse
                     if (isNaN(startDate.getTime())) {
-                        console.warn('DEBUG BACKEND All Horarios: Fecha inválida:', row);
+                        console.warn('DEBUG BACKEND All Horarios: Fecha inválida:', row, 'startStr:', startStr);
                         return null;
                     }
-                    const className = row.estado === 'activo' ? 'horario-activo' : 'horario-inactivo';
+                    const className = row.estado === 'activo' ? 'gh-horario-activo' : 'gh-horario-inactivo';
                     const estadoText = row.estado === 'activo' ? 'Activo' : 'Inactivo';
                     const evento = {
                         id: row.idHorario,
-                        title: `${row.nombreProfesional} - ${estadoText}`, // ← FIX: Pro + estado
+                        title: `${row.nombreProfesional} - ${estadoText}`, // Nombre + estado para bloque
                         start: startStr,
-                        end: `${row.fecha}T${row.hora_fin}`,
+                        end: endStr,
                         classNames: [className],
                         backgroundColor: row.estado === 'activo' ? '#28a745' : '#dc3545',
                         borderColor: row.estado === 'activo' ? '#28a745' : '#dc3545',
                         extendedProps: {
                             estado: row.estado,
                             nombreProfesional: row.nombreProfesional,
-                            idHorario: row.idHorario
+                            idHorario: row.idHorario,
+                            fechaLocal: fechaLocal // ← NUEVO: Para debug en frontend
                         }
                     };
-                    console.log('DEBUG BACKEND All Horarios: Evento mapeado:', evento);
+                    console.log('DEBUG BACKEND All Horarios: Evento mapeado (local):', evento, 'Raw fecha:', row.fecha, 'Local:', fechaLocal);
                     return evento;
                 })
                 .filter(evento => evento !== null);
@@ -79,7 +84,13 @@ class HorariosController {
             const [results] = await db.execute(query, [fecha]);
             console.log('DEBUG BACKEND Horarios by Date:', fecha, 'Results:', results.length);
 
-            res.json(results); // Raw para prefill
+            // FIX: Agregar fechaLocal con Moment para consistencia
+            const resultsWithLocal = results.map(row => ({
+                ...row,
+                fechaLocal: moment(row.fecha).local().format('DD/MM/YYYY') // Para tabla
+            }));
+
+            res.json(resultsWithLocal); // Raw + local para prefill/tabla
         } catch (error) {
             console.error('Error al obtener horarios por fecha:', error);
             res.status(500).json({ error: 'Error en la base de datos' });
@@ -99,22 +110,34 @@ class HorariosController {
             console.log('DEBUG BACKEND: idProfesional válido:', idProfesional);
 
             const query = `
-                SELECT idHorario, fecha, hora_inicio, hora_fin, estado 
-                FROM Horarios 
-                WHERE idProfesional = ? 
+                SELECT idHorario, fecha, hora_inicio, hora_fin, estado, p.nombreProfesional
+                FROM Horarios h
+                JOIN Profesional p ON h.idProfesional = p.idProfesional
+                WHERE h.idProfesional = ? 
                 ORDER BY fecha, hora_inicio
             `;
             const [results] = await db.execute(query, [idProfesional]);
 
-            const eventos = results.map(row => ({
-                id: row.idHorario,
-                title: row.estado === 'activo' ? `Disponible - ${row.hora_inicio} a ${row.hora_fin}` : 'Agenda Cerrada',
-                start: `${row.fecha}T${row.hora_inicio}`,
-                end: `${row.fecha}T${row.hora_fin}`,
-                classNames: [row.estado === 'activo' ? 'horario-activo' : 'horario-inactivo'],
-                backgroundColor: row.estado === 'activo' ? '#28a745' : '#dc3545',
-                borderColor: row.estado === 'activo' ? '#28a745' : '#dc3545'
-            }));
+            const eventos = results.map(row => {
+                // FIX: Moment para local time
+                const fechaLocal = moment(row.fecha).local().format('YYYY-MM-DD');
+                const startStr = `${fechaLocal}T${row.hora_inicio}`;
+                const endStr = `${fechaLocal}T${row.hora_fin}`;
+                return {
+                    id: row.idHorario,
+                    title: `${row.nombreProfesional} - ${row.estado === 'activo' ? 'Activo' : 'Inactivo'}`,
+                    start: startStr,
+                    end: endStr,
+                    classNames: [row.estado === 'activo' ? 'gh-horario-activo' : 'gh-horario-inactivo'],
+                    backgroundColor: row.estado === 'activo' ? '#28a745' : '#dc3545',
+                    borderColor: row.estado === 'activo' ? '#28a745' : '#dc3545',
+                    extendedProps: {
+                        estado: row.estado,
+                        nombreProfesional: row.nombreProfesional,
+                        fechaLocal: fechaLocal // ← NUEVO: Debug
+                    }
+                };
+            });
 
             console.log('DEBUG: Resultados encontrados:', results.length);
             res.json({ horarios: results, eventosParaCalendario: eventos });
@@ -124,6 +147,7 @@ class HorariosController {
         }
     }
 
+    // createHorario y updateHorario sin cambios, ya que no mapean eventos
     static async createHorario(req, res) {
         try {
             console.log('DEBUG BACKEND POST: Body recibido:', req.body);

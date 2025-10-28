@@ -1,4 +1,5 @@
 const db = require('../config/conexion.db');
+const moment = require('moment'); // Para manejo local de fechas
 
 class CitasProfesionalController {
 
@@ -12,40 +13,42 @@ class CitasProfesionalController {
                 ORDER BY c.fechaCita, c.horaCita
             `;
             const [results] = await db.execute(query);
-            console.log('DEBUG BACKEND All Citas: Raw results from DB:', results.length);
+            console.log('DEBUG BACKEND All Citas: Raw results:', results.length);
 
             const eventosCitas = results
                 .filter(row => row.fechaCita && row.horaCita)
                 .map(row => {
-                    const fechaStr = row.fechaCita.toISOString().split('T')[0];
-                    const startStr = `${fechaStr}T${row.horaCita}`;
-                    const startDate = new Date(startStr);
+                    // FIX: Usar Moment para local time (evita merma)
+                    const fechaLocal = moment(row.fechaCita).local().format('YYYY-MM-DD');
+                    const startStr = `${fechaLocal}T${row.horaCita}`;
+                    const startDate = moment(startStr).toDate(); // Local parse
                     if (isNaN(startDate.getTime())) {
-                        console.warn('DEBUG BACKEND All Citas: Fecha inválida:', row);
+                        console.warn('DEBUG BACKEND All Citas: Fecha inválida:', row, 'startStr:', startStr);
                         return null;
                     }
-                    const endDate = new Date(startDate.getTime() + row.servDuracion * 60 * 1000);
-                    const endStr = endDate.toTimeString().slice(0, 5);
-                    const endFullStr = `${fechaStr}T${endStr}`;
-                    const className = row.estadoCita === 'confirmada' ? 'cita-confirmada' :
-                        row.estadoCita === 'cancelada' ? 'cita-cancelada' : 'cita-pendiente';
+                    const endDate = moment(startDate.getTime() + row.servDuracion * 60 * 1000).toDate();
+                    const endStr = moment(endDate).local().format('HH:mm');
+                    const endFullStr = `${fechaLocal}T${endStr}`;
+                    const className = row.estadoCita === 'confirmada' ? 'gh-cita-confirmada' :
+                        row.estadoCita === 'cancelada' ? 'gh-cita-cancelada' : 'gh-cita-agendada';
                     const evento = {
                         id: row.idCita,
-                        title: `${row.nombreProfesional} - ${row.descripcionServicio}`,
+                        title: row.nombreProfesional, // Solo nombre pro para cita
                         start: startStr,
                         end: endFullStr,
                         classNames: [className],
                         backgroundColor: row.estadoCita === 'confirmada' ? '#28a745' :
-                            row.estadoCita === 'cancelada' ? '#dc3545' : '#ffc107',
+                            row.estadoCita === 'cancelada' ? '#dc3545' : '#28a745',
                         borderColor: row.estadoCita === 'confirmada' ? '#28a745' :
-                            row.estadoCita === 'cancelada' ? '#dc3545' : '#ffc107',
+                            row.estadoCita === 'cancelada' ? '#dc3545' : '#28a745',
                         extendedProps: {
                             estado: row.estadoCita,
                             nombreProfesional: row.nombreProfesional,
-                            descripcionServicio: row.descripcionServicio
+                            descripcionServicio: row.descripcionServicio,
+                            fechaLocal: fechaLocal // ← NUEVO: Para debug
                         }
                     };
-                    console.log('DEBUG BACKEND All Citas: Evento mapeado:', evento);
+                    console.log('DEBUG BACKEND All Citas: Evento mapeado (local):', evento, 'Raw fecha:', row.fechaCita, 'Local:', fechaLocal);
                     return evento;
                 })
                 .filter(evento => evento !== null);
@@ -82,35 +85,37 @@ class CitasProfesionalController {
             const eventosCitas = results
                 .filter(row => row.fechaCita && row.horaCita)
                 .map(row => {
-                    const fechaStr = row.fechaCita.toISOString().split('T')[0];
-                    const startStr = `${fechaStr}T${row.horaCita}`;
-                    const startDate = new Date(startStr);
+                    // FIX: Moment para local time
+                    const fechaLocal = moment(row.fechaCita).local().format('YYYY-MM-DD');
+                    const startStr = `${fechaLocal}T${row.horaCita}`;
+                    const startDate = moment(startStr).toDate();
                     if (isNaN(startDate.getTime())) {
                         console.warn('DEBUG BACKEND Citas: Fecha inválida para cita:', row, 'startStr:', startStr);
                         return null;
                     }
-                    const endDate = new Date(startDate.getTime() + row.servDuracion * 60 * 1000);
-                    const endStr = endDate.toTimeString().slice(0, 5);
-                    const endFullStr = `${fechaStr}T${endStr}`;
+                    const endDate = moment(startDate.getTime() + row.servDuracion * 60 * 1000).toDate();
+                    const endStr = moment(endDate).local().format('HH:mm');
+                    const endFullStr = `${fechaLocal}T${endStr}`;
                     const className = row.estadoCita === 'confirmada' ? 'cita-confirmada' :
-                        row.estadoCita === 'cancelada' ? 'cita-cancelada' : 'cita-pendiente'; // ← FIX: classNames para CSS
+                        row.estadoCita === 'cancelada' ? 'cita-cancelada' : 'cita-pendiente';
                     const evento = {
                         id: row.idCita,
                         title: `${row.nombreProfesional} - ${row.descripcionServicio}`,
                         start: startStr,
                         end: endFullStr,
-                        classNames: [className], // ← FIX: Para CSS individual
+                        classNames: [className],
                         backgroundColor: row.estadoCita === 'confirmada' ? '#28a745' :
-                            row.estadoCita === 'cancelada' ? '#dc3545' : '#ffc107', // Fallback si CSS no carga
+                            row.estadoCita === 'cancelada' ? '#dc3545' : '#ffc107',
                         borderColor: row.estadoCita === 'confirmada' ? '#28a745' :
                             row.estadoCita === 'cancelada' ? '#dc3545' : '#ffc107',
                         extendedProps: {
                             estado: row.estadoCita,
                             nombreProfesional: row.nombreProfesional,
-                            descripcionServicio: row.descripcionServicio
+                            descripcionServicio: row.descripcionServicio,
+                            fechaLocal: fechaLocal // ← NUEVO
                         }
                     };
-                    console.log('DEBUG BACKEND Citas: Evento mapeado (local válido):', evento);
+                    console.log('DEBUG BACKEND Citas: Evento mapeado (local válido):', evento, 'Raw:', row.fechaCita, 'Local:', fechaLocal);
                     return evento;
                 })
                 .filter(evento => evento !== null);
@@ -123,7 +128,6 @@ class CitasProfesionalController {
         }
     }
 
-    // Nuevo: Citas por fecha (global, para click día)
     static async getCitasByDate(req, res) {
         try {
             const { fecha } = req.params; // ej. '2025-10-20'
@@ -142,7 +146,13 @@ class CitasProfesionalController {
             const [results] = await db.execute(query, [fecha]);
             console.log('DEBUG BACKEND Citas by Date:', fecha, 'Results:', results.length);
 
-            res.json(results); // Raw para tabla (no formateado)
+            // FIX: Agregar fechaLocal con Moment
+            const resultsWithLocal = results.map(row => ({
+                ...row,
+                fechaLocal: moment(row.fechaCita).local().format('DD/MM/YYYY') // Para tabla
+            }));
+
+            res.json(resultsWithLocal); // Raw + local
         } catch (error) {
             console.error('Error al obtener citas por fecha:', error);
             res.status(500).json({ error: 'Error en la base de datos' });
