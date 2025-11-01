@@ -204,10 +204,10 @@ class CrudControllerCitas {
             // Validamos que no haya citas que ya ocupen el horario
             const [citas] = await connection.query(
                 `SELECT idCita FROM Citas
-                 WHERE idProfesional = ? AND fechaCita = ? AND fin_cita IS NOT NULL AND (
-                     (horaCita < ? AND fin_cita > ?) OR
-                     (horaCita >= ? AND horaCita < ?)
-                 )`,
+                WHERE idProfesional = ? AND fechaCita = ? AND fin_cita IS NOT NULL AND (
+                    (horaCita < ? AND fin_cita > ?) OR
+                    (horaCita >= ? AND horaCita < ?)
+                )`,
                 [
                     idProfesional,
                     fechaCita,
@@ -237,6 +237,39 @@ class CrudControllerCitas {
         connection.release();
     }
 }
+// Dentro de CrudControllerCitas
+async obtenerFechaNacimientoPorCelular(celular) {
+        const connection = await db.getConnection();
+        try {
+            if (!celular) throw new Error("Se requiere el celular del cliente");
+
+            const [[cliente]] = await connection.query(
+                `SELECT fechaNacCliente FROM Cliente WHERE celularCliente = ?`,
+                [celular]
+            );
+
+            if (!cliente) {
+                return null; // No existe cliente
+            }
+
+            if (!cliente.fechaNacCliente) {
+                return null; // Tiene cliente pero sin fecha
+            }
+
+            const fecha = moment(cliente.fechaNacCliente);
+            if (!fecha.isValid()) {
+                console.warn("Fecha inválida en BD:", cliente.fechaNacCliente);
+                return null;
+            }
+
+            return fecha.format('YYYY-MM-DD');
+        } catch (error) {
+            console.error("Error en obtenerFechaNacimientoPorCelular:", error);
+            throw error;
+        } finally {
+            connection.release();
+        }
+    }
 }
 
 module.exports = CrudControllerCitas;

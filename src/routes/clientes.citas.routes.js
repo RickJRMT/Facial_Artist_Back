@@ -82,5 +82,16 @@ router.post('/disponibilidad', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
+// Ruta para obtener la fecha de nacimiento de un cliente por celular
+router.get('/fecha-nacimiento/:celular', async (req, res) => {
+    try {
+        const fecha = await crudCitas.obtenerFechaNacimientoPorCelular(req.params.celular);
+        res.json({ 
+            fechaNacCliente: fecha || null 
+        });
+    } catch (error) {
+        console.error('Error al obtener fecha de nacimiento:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
 module.exports = router; 
