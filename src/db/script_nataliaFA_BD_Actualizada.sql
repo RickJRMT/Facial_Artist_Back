@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS Servicios (
     servDescripcion TEXT,
     servFechaCreacion DATETIME DEFAULT CURRENT_TIMESTAMP,
     servCosto DECIMAL(10,2),
+    servEstado ENUM('activo', 'inactivo') DEFAULT 'activo',
     servImagen LONGBLOB,
     servDuracion INT NOT NULL DEFAULT 60 -- duración en minutos
 );
