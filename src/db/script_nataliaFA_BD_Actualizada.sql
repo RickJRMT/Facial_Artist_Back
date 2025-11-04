@@ -18,8 +18,6 @@ CREATE TABLE IF NOT EXISTS Profesional (
     correoProfesional VARCHAR(100) NOT NULL,
     telefonoProfesional VARCHAR(20) NOT NULL,
     contraProfesional VARCHAR(50) NOT NULL,
-    -- horainiciodef TIME NOT NULL, 
-    -- horafindef TIME NOT NULL, 
     fechaCreacionProf DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -42,6 +40,7 @@ CREATE TABLE IF NOT EXISTS Cursos (
     cursoDescripcion TEXT,
     cursoDuracion VARCHAR(50),
     cursoCosto DECIMAL(10,2),
+    cursoEstado ENUM('activo', 'inactivo') DEFAULT 'activo',
     cursoImagen LONGBLOB,
     fechaCreacion DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -94,11 +93,11 @@ VALUES
 ('Juan Gómez', '4002345678', '1995-07-12');
 
 -- Insertar datos en la tabla Profesional
-INSERT INTO Profesional (nombreProfesional, correoProfesional, telefonoProfesional, contraProfesional, horainiciodef, horafindef)
+INSERT INTO Profesional (nombreProfesional, correoProfesional, telefonoProfesional, contraProfesional)
 VALUES 
-('Natalia Ruiz', 'natalia@facialartist.com', '3001234567', 'contra123', '09:00:00', '18:00:00'),
-('Paola Fernández', 'paola@facialartist.com', '3007654321', 'contra456', '10:00:00', '19:00:00'),
-('Carla Díaz', 'carla@facialartist.com', '3009876543', 'contra789', '08:00:00', '17:00:00');
+('Natalia Ruiz', 'natalia@facialartist.com', '3001234567', 'contra123'),
+('Paola Fernández', 'paola@facialartist.com', '3007654321', 'contra456'),
+('Carla Díaz', 'carla@facialartist.com', '3009876543', 'contra789');
 
 -- Insertar datos en la tabla Servicios
 INSERT INTO Servicios (servNombre, servDescripcion, servCosto, servDuracion)
