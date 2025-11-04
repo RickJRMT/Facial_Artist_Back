@@ -1,11 +1,80 @@
+// src/routes/cursos.routes.js
 const express = require('express');
 const router = express.Router();
 const cursosController = require('../controllers/cursos.controller');
 
-router.post('/', cursosController.crearCurso);
-router.get('/', cursosController.obtenerCurso);
-router.get('/:id', cursosController.obtenerCursoPorId);
-router.put('/:id', cursosController.actualizarCurso);
-router.delete('/:id', cursosController.eliminarCurso);
+// GET /api/cursos - Obtener todos los cursos
+router.get('/', async (req, res) => {
+    try {
+        await cursosController.obtenerCurso(req, res);
+    } catch (error) {
+        console.error('Error en ruta GET /cursos:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Error interno del servidor' 
+        });
+    }
+});
+
+// GET /api/cursos/:id - Obtener un curso por ID
+router.get('/:id', async (req, res) => {
+    try {
+        await cursosController.obtenerCursoPorId(req, res);
+    } catch (error) {
+        console.error('Error en ruta GET /cursos/:id:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Error interno del servidor' 
+        });
+    }
+});
+
+// POST /api/cursos - Crear un nuevo curso
+router.post('/', async (req, res) => {
+    try {
+        // Validar campos requeridos
+        const { nombreCurso } = req.body;
+        if (!nombreCurso) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'El nombre del curso es requerido' 
+            });
+        }
+
+        await cursosController.crearCurso(req, res);
+    } catch (error) {
+        console.error('Error en ruta POST /cursos:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Error interno del servidor' 
+        });
+    }
+});
+
+// PUT /api/cursos/:id - Actualizar un curso por ID
+router.put('/:id', async (req, res) => {
+    try {
+        await cursosController.actualizarCurso(req, res);
+    } catch (error) {
+        console.error('Error en ruta PUT /cursos/:id:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Error interno del servidor' 
+        });
+    }
+});
+
+// DELETE /api/cursos/:id - Eliminar un curso por ID
+router.delete('/:id', async (req, res) => {
+    try {
+        await cursosController.eliminarCurso(req, res);
+    } catch (error) {
+        console.error('Error en ruta DELETE /cursos/:id:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Error interno del servidor' 
+        });
+    }
+});
 
 module.exports = router;

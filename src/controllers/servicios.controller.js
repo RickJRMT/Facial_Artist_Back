@@ -38,8 +38,8 @@ class ServiciosController {
             // Convertir servImagen de Base64 (string desde frontend) a Buffer para MySQL
             const servImagen = data.servImagen ? Buffer.from(data.servImagen, 'base64') : null;
             const [resultado] = await db.query(
-                'INSERT INTO Servicios (servNombre, servDescripcion, servCosto, servImagen, servDuracion) VALUES (?, ?, ?, ?, ?)',
-                [data.servNombre, data.servDescripcion, data.servCosto, servImagen, data.servDuracion || 60]
+                'INSERT INTO Servicios (servNombre, servDescripcion, servCosto, servEstado, servImagen, servDuracion) VALUES (?, ?, ?, ?, ?, ?)',
+                [data.servNombre, data.servDescripcion, data.servCosto, data.servEstado || 'activo', servImagen, data.servDuracion || 60]
             );
             // Retorna el registro creado con el nuevo ID (servImagen como Base64 para consistencia)
             const nuevoId = resultado.insertId;
@@ -59,8 +59,8 @@ class ServiciosController {
             // Convertir servImagen de Base64 a Buffer si se proporciona
             const servImagen = data.servImagen ? Buffer.from(data.servImagen, 'base64') : null;
             const [resultado] = await db.query(
-                'UPDATE Servicios SET servNombre = ?, servDescripcion = ?, servCosto = ?, servImagen = ?, servDuracion = ? WHERE idServicios = ?',
-                [data.servNombre, data.servDescripcion, data.servCosto, servImagen, data.servDuracion || existing.servDuracion || 60, id]
+                'UPDATE Servicios SET servNombre = ?, servDescripcion = ?, servCosto = ?, servEstado = ?, servImagen = ?, servDuracion = ? WHERE idServicios = ?',
+                [data.servNombre, data.servDescripcion, data.servCosto, data.servEstado || existing.servEstado || 'activo', servImagen, data.servDuracion || existing.servDuracion || 60, id]
             );
             if (resultado.affectedRows === 0) {
                 throw new Error('No se pudo actualizar el registro');
