@@ -120,125 +120,125 @@ class CrudControllerCitas {
     }
 
     // Método para obtener los horarios disponibles para un profesional, en una fecha y servicio dados
-  async obtenerHorariosDisponibles(data) {
-    const connection = await db.getConnection();
-    try {
-        const { idProfesional, fechaCita, idServicios } = data;
+    async obtenerHorariosDisponibles(data) {
+        const connection = await db.getConnection();
+        try {
+            const { idProfesional, fechaCita, idServicios } = data;
 
-        // Validamos que los datos requeridos estén presentes
-        if (!idProfesional || !fechaCita || !idServicios) {
-            throw new Error('Faltan datos: idProfesional, fechaCita o idServicios');
-        }
+            // Validamos que los datos requeridos estén presentes
+            if (!idProfesional || !fechaCita || !idServicios) {
+                throw new Error('Faltan datos: idProfesional, fechaCita o idServicios');
+            }
 
-        // Validamos que la fecha de la cita esté en formato correcto 'YYYY-MM-DD'
-        if (!moment(fechaCita, 'YYYY-MM-DD', true).isValid()) {
-            throw new Error('Formato de fechaCita inválido, debe ser YYYY-MM-DD');
-        }
+            // Validamos que la fecha de la cita esté en formato correcto 'YYYY-MM-DD'
+            if (!moment(fechaCita, 'YYYY-MM-DD', true).isValid()) {
+                throw new Error('Formato de fechaCita inválido, debe ser YYYY-MM-DD');
+            }
 
-        // Obtenemos rangos INACTIVOS para excluirlos después
-        const [horariosInactivos] = await connection.query(
-            `SELECT hora_inicio, hora_fin FROM Horarios 
+            // Obtenemos rangos INACTIVOS para excluirlos después
+            const [horariosInactivos] = await connection.query(
+                `SELECT hora_inicio, hora_fin FROM Horarios 
              WHERE idProfesional = ? AND fecha = ? AND estado = 'inactivo' ORDER BY hora_inicio`,
-            [idProfesional, fechaCita]
-        );
+                [idProfesional, fechaCita]
+            );
 
-        // Consultamos los horarios disponibles para el profesional en la fecha solicitada
-        const [horarios] = await connection.query(
-            `SELECT hora_inicio, hora_fin FROM Horarios 
+            // Consultamos los horarios disponibles para el profesional en la fecha solicitada
+            const [horarios] = await connection.query(
+                `SELECT hora_inicio, hora_fin FROM Horarios 
              WHERE idProfesional = ? AND fecha = ? AND estado = 'activo'`,
-            [idProfesional, fechaCita]
-        );
+                [idProfesional, fechaCita]
+            );
 
-        // Si no hay horarios definidos para ese día, devolvemos vacío
-        if (!horarios || horarios.length === 0) {
-            return [];
-        }
+            // Si no hay horarios definidos para ese día, devolvemos vacío
+            if (!horarios || horarios.length === 0) {
+                return [];
+            }
 
-        // Tomamos el primer rango de horario disponible
-        const horario = horarios[0];
-        let horaInicio = moment(`${fechaCita} ${horario.hora_inicio}`, 'YYYY-MM-DD HH:mm:ss');
-        let horaFin = moment(`${fechaCita} ${horario.hora_fin}`, 'YYYY-MM-DD HH:mm:ss');
+            // Tomamos el primer rango de horario disponible
+            const horario = horarios[0];
+            let horaInicio = moment(`${fechaCita} ${horario.hora_inicio}`, 'YYYY-MM-DD HH:mm:ss');
+            let horaFin = moment(`${fechaCita} ${horario.hora_fin}`, 'YYYY-MM-DD HH:mm:ss');
 
-        if (!horaInicio.isValid() || !horaFin.isValid() || horaInicio >= horaFin) {
-            throw new Error('Horario inválido');
-        }
+            if (!horaInicio.isValid() || !horaFin.isValid() || horaInicio >= horaFin) {
+                throw new Error('Horario inválido');
+            }
 
-        // Consultamos la duración del servicio
-        const [[servicio]] = await connection.query(
-            `SELECT servDuracion FROM Servicios WHERE idServicios = ?`,
-            [idServicios]
-        );
-        if (!servicio) {
-            throw new Error(`Servicio no encontrado para id ${idServicios}`);
-        }
-        const duracionMinutos = parseInt(servicio.servDuracion, 10);
-        if (duracionMinutos <= 0) {
-            throw new Error(`Duración del servicio inválida: ${duracionMinutos} minutos`);
-        }
+            // Consultamos la duración del servicio
+            const [[servicio]] = await connection.query(
+                `SELECT servDuracion FROM Servicios WHERE idServicios = ?`,
+                [idServicios]
+            );
+            if (!servicio) {
+                throw new Error(`Servicio no encontrado para id ${idServicios}`);
+            }
+            const duracionMinutos = parseInt(servicio.servDuracion, 10);
+            if (duracionMinutos <= 0) {
+                throw new Error(`Duración del servicio inválida: ${duracionMinutos} minutos`);
+            }
 
-        // Generamos los slots de horarios disponibles
-        const slots = [];
-        let current = horaInicio.clone();
+            // Generamos los slots de horarios disponibles
+            const slots = [];
+            let current = horaInicio.clone();
 
-        while (current < horaFin) {
-            const slotInicio = current.clone();
-            const slotFin = current.clone().add(duracionMinutos, 'minutes');
+            while (current < horaFin) {
+                const slotInicio = current.clone();
+                const slotFin = current.clone().add(duracionMinutos, 'minutes');
 
-            if (slotFin > horaFin || slotFin <= slotInicio) break;
+                if (slotFin > horaFin || slotFin <= slotInicio) break;
 
-            // Validar que el slot NO overlap con horarios inactivos
-            let overlapInactivo = false;
-            for (const inactivo of horariosInactivos) {
-                const inactivoInicio = moment(`${fechaCita} ${inactivo.hora_inicio}`, 'YYYY-MM-DD HH:mm:ss');
-                const inactivoFin = moment(`${fechaCita} ${inactivo.hora_fin}`, 'YYYY-MM-DD HH:mm:ss');
-                if (slotInicio.isBefore(inactivoFin) && slotFin.isAfter(inactivoInicio)) {
-                    overlapInactivo = true;
-                    break;
+                // Validar que el slot NO overlap con horarios inactivos
+                let overlapInactivo = false;
+                for (const inactivo of horariosInactivos) {
+                    const inactivoInicio = moment(`${fechaCita} ${inactivo.hora_inicio}`, 'YYYY-MM-DD HH:mm:ss');
+                    const inactivoFin = moment(`${fechaCita} ${inactivo.hora_fin}`, 'YYYY-MM-DD HH:mm:ss');
+                    if (slotInicio.isBefore(inactivoFin) && slotFin.isAfter(inactivoInicio)) {
+                        overlapInactivo = true;
+                        break;
+                    }
                 }
-            }
-            if (overlapInactivo) {
-                current.add(duracionMinutos, 'minutes');
-                continue;
-            }
+                if (overlapInactivo) {
+                    current.add(duracionMinutos, 'minutes');
+                    continue;
+                }
 
-            // Validamos que no haya citas que ya ocupen el horario
-            const [citas] = await connection.query(
-                `SELECT idCita FROM Citas
+                // Validamos que no haya citas que ya ocupen el horario
+                const [citas] = await connection.query(
+                    `SELECT idCita FROM Citas
                 WHERE idProfesional = ? AND fechaCita = ? AND fin_cita IS NOT NULL AND (
                     (horaCita < ? AND fin_cita > ?) OR
                     (horaCita >= ? AND horaCita < ?)
                 )`,
-                [
-                    idProfesional,
-                    fechaCita,
-                    slotFin.format('HH:mm:ss'),
-                    slotInicio.format('HH:mm:ss'),
-                    slotInicio.format('HH:mm:ss'),
-                    slotFin.format('HH:mm:ss')
-                ]
-            );
+                    [
+                        idProfesional,
+                        fechaCita,
+                        slotFin.format('HH:mm:ss'),
+                        slotInicio.format('HH:mm:ss'),
+                        slotInicio.format('HH:mm:ss'),
+                        slotFin.format('HH:mm:ss')
+                    ]
+                );
 
-            if (citas.length === 0) {
-                slots.push({
-                    horaInicio: slotInicio.format('h:mm A'),
-                    horaFin: slotFin.format('h:mm A'),
-                    horaInicio24: slotInicio.format('HH:mm:ss'),
-                });
+                if (citas.length === 0) {
+                    slots.push({
+                        horaInicio: slotInicio.format('h:mm A'),
+                        horaFin: slotFin.format('h:mm A'),
+                        horaInicio24: slotInicio.format('HH:mm:ss'),
+                    });
+                }
+
+                current.add(duracionMinutos, 'minutes');
             }
 
-            current.add(duracionMinutos, 'minutes');
+            return slots;
+        } catch (error) {
+            console.error('Error en obtenerHorariosDisponibles:', error);
+            throw error;
+        } finally {
+            connection.release();
         }
-
-        return slots;
-    } catch (error) {
-        console.error('Error en obtenerHorariosDisponibles:', error);
-        throw error;
-    } finally {
-        connection.release();
     }
-}
-// Dentro de CrudControllerCitas
-async obtenerFechaNacimientoPorCelular(celular) {
+    // Dentro de CrudControllerCitas
+    async obtenerFechaNacimientoPorCelular(celular) {
         const connection = await db.getConnection();
         try {
             if (!celular) throw new Error("Se requiere el celular del cliente");
@@ -265,6 +265,95 @@ async obtenerFechaNacimientoPorCelular(celular) {
             return fecha.format('YYYY-MM-DD');
         } catch (error) {
             console.error("Error en obtenerFechaNacimientoPorCelular:", error);
+            throw error;
+        } finally {
+            connection.release();
+        }
+    }
+    async consultarCitaPorTelefonoYReferencia({ celular, numeroReferencia }) {
+        const connection = await db.getConnection();
+        try {
+            if (!celular || !numeroReferencia) {
+                throw new Error('Se requiere celular y número de referencia');
+            }
+
+            const [rows] = await connection.query(`
+            SELECT 
+                c.*,
+                cl.nombreCliente,
+                cl.celularCliente,
+                cl.fechaNacCliente,
+                s.servNombre,
+                s.servDuracion,
+                p.nombreProfesional
+            FROM Citas c
+            JOIN Cliente cl ON c.idCliente = cl.idCliente
+            JOIN Servicios s ON c.idServicios = s.idServicios
+            JOIN Profesional p ON c.idProfesional = p.idProfesional
+            WHERE cl.celularCliente = ? AND c.numeroReferencia = ?
+        `, [celular, numeroReferencia]);
+
+            if (rows.length === 0) {
+                return null; // No encontrada
+            }
+
+            const cita = rows[0];
+            // Formatear fechas/horas bonitas
+            // cita.fechaCita = moment(cita.fechaCita).format('DD [de] MMMM [de] YYYY');
+            // NUEVO: Fecha en formato ISO (para new Date())
+            cita.fechaCitaISO = moment(cita.fechaCita).format('YYYY-MM-DD');
+
+            // NUEVO: Fecha bonita en español (para mostrar)
+            cita.fechaCitaFormateada = moment(cita.fechaCita)
+                .locale('es')
+                .format('DD [de] MMMM [de] YYYY');
+            cita.horaCita = moment(cita.horaCita, 'HH:mm:ss').format('h:mm A');
+            cita.fin_cita = cita.fin_cita ? moment(cita.fin_cita, 'HH:mm:ss').format('h:mm A') : null;
+
+            return cita;
+        } catch (error) {
+            console.error('Error en consultarCitaPorTelefonoYReferencia:', error);
+            throw error;
+        } finally {
+            connection.release();
+        }
+    }
+    async consultarCitaPorReferencia(numeroReferencia) {
+        const connection = await db.getConnection();
+        try {
+            const [rows] = await connection.query(`
+            SELECT 
+                c.*,
+                cl.nombreCliente,
+                cl.celularCliente,
+                cl.fechaNacCliente,
+                s.servNombre,
+                s.servDuracion,
+                p.nombreProfesional
+            FROM Citas c
+            JOIN Cliente cl ON c.idCliente = cl.idCliente
+            JOIN Servicios s ON c.idServicios = s.idServicios
+            JOIN Profesional p ON c.idProfesional = p.idProfesional
+            WHERE c.numeroReferencia = ?
+        `, [numeroReferencia]);
+
+            if (rows.length === 0) return null;
+
+            const cita = rows[0];
+            // Formatear fechas bonitas
+            // cita.fechaCita = moment(cita.fechaCita).format('DD [de] MMMM [de] YYYY');
+            cita.fechaCitaISO = moment(cita.fechaCita).format('YYYY-MM-DD');
+
+            // NUEVO: Fecha bonita en español (para mostrar)
+            cita.fechaCitaFormateada = moment(cita.fechaCita)
+                .locale('es')
+                .format('DD [de] MMMM [de] YYYY');
+            cita.horaCita = moment(cita.horaCita, 'HH:mm:ss').format('h:mm A');
+            cita.fin_cita = cita.fin_cita ? moment(cita.fin_cita, 'HH:mm:ss').format('h:mm A') : null;
+
+            return cita;
+        } catch (error) {
+            console.error('Error en consultarCitaPorReferencia:', error);
             throw error;
         } finally {
             connection.release();

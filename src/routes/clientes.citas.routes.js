@@ -94,4 +94,29 @@ router.get('/fecha-nacimiento/:celular', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+router.post('/consultar', async (req, res) => {
+    try {
+        const cita = await crudCitas.consultarCitaPorTelefonoYReferencia(req.body);
+        if (!cita) {
+            return res.status(404).json({ error: 'Cita no encontrada' });
+        }
+        res.json(cita);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get('/referencia/:ref', async (req, res) => {
+    try {
+        const cita = await crudCitas.consultarCitaPorReferencia(req.params.ref);
+        if (!cita) {
+            return res.status(404).json({ error: 'Cita no encontrada' });
+        }
+        res.json(cita);
+    } catch (error) {
+        console.error('Error en /referencia:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
 module.exports = router; 
