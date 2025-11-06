@@ -19,6 +19,8 @@ const hvRoutes = require('../src/routes/hv.routes');
 const serviciosRoutes = require('../src/routes/servicios.routes');
 // Importar las rutas para el manejo de servicios desde el archivo correspondiente
 
+const clientesRoutes = require('../src/routes/Clientes.routes');
+
 // const horariosRoutes = require('../src/routes/horarios.routes');
 // // Importar las rutas para el manejo de horarios desde el archivo correspondiente
 
@@ -47,6 +49,8 @@ app.use('/api/cursos', cursosRoutes);
 
 app.use('/api/hv', hvRoutes);
 // Asocia todas las rutas de hv bajo el prefijo de /api/hv
+
+app.use('/api/cliente', clientesRoutes);
 
 app.use('/api/servicios', serviciosRoutes);
 // Asocia todas las rutas de servicios bajo el prefijo de /api/servicios

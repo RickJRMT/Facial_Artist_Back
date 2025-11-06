@@ -1,25 +1,25 @@
 const pool = require('../config/conexion.db');
+const imagenesController = require('./imagenes.controller');
 
 const crearCurso = async (req, res) => {
     try {
-        const { idProfesional, nombreCurso, cursoDesc, cursoDuracion, cursoCosto, imagenBase64 } = req.body;
+        const { nombreCurso, cursoDescripcion, cursoDuracion, cursoCosto, imagenBase64 } = req.body;
 
-        if (!idProfesional || !nombreCurso) {
-            return res.status(400).json({ message: 'El Profesional y Nombre del curso son requeridos' });
+        if (!nombreCurso) {
+            return res.status(400).json({ message: 'El nombre del curso es requerido' });
         }
 
-        if (cursoDuracion && cursoDuracion.length > 100) {
-            return res.status(400).json({ message: 'los caracteres de la deracion del curso no deben superar los 100 ' });
+        if (cursoDuracion && cursoDuracion.length > 50) {
+            return res.status(400).json({ message: 'La duración del curso no debe superar los 50 caracteres' });
         }
 
-
-        if (cursoCosto < 0) {
-            return res.status(400).json({ message: 'el costo no debe ser negativo' });
+        if (cursoCosto && cursoCosto < 0) {
+            return res.status(400).json({ message: 'El costo no debe ser negativo' });
         }
 
         const [result] = await pool.execute(
-            'INSERT INTO Cursos (idProfesional, nombreCurso, cursoDescripcion, cursoDuracion, cursoCosto) VALUES (?, ?, ?, ?, ?)',
-            [idProfesional, nombreCurso, cursoDesc, cursoDuracion, cursoCosto]
+            'INSERT INTO Cursos (nombreCurso, cursoDescripcion, cursoDuracion, cursoCosto) VALUES (?, ?, ?, ?)',
+            [nombreCurso, cursoDescripcion, cursoDuracion, cursoCosto]
         );
 
         const idCurso = result.insertId;
@@ -39,7 +39,6 @@ const crearCurso = async (req, res) => {
         let curso = nuevoCursoRows[0];
 
         if (curso.cursoImagen) {
-
             const imagenData = await imagenesController.obtenerImagen('Cursos', 'idCurso', idCurso);
             curso.cursoImagen = imagenData.cursoImagen || null;
         }
@@ -92,7 +91,7 @@ const obtenerCursoPorId = async (req, res) => {
 const actualizarCurso = async (req, res) => {
     try {
         const { id } = req.params;
-        const { idProfesional, nombreCurso, cursoDesc, cursoDuracion, cursoCosto, imagenBase64 } = req.body;
+        const { nombreCurso, cursoDescripcion, cursoDuracion, cursoCosto, imagenBase64 } = req.body;
 
         const [cursoExistenteRows] = await pool.execute('SELECT * FROM Cursos WHERE idCurso = ?', [id]);
         if (cursoExistenteRows.length === 0) {
@@ -100,22 +99,20 @@ const actualizarCurso = async (req, res) => {
             return res.status(404).json({ error: 'Curso no encontrado' });
         }
 
-        if (!idProfesional || !nombreCurso) {
-            return res.status(400).json({ message: 'El Profesional y Nombre del curso son requeridos' });
+        if (!nombreCurso) {
+            return res.status(400).json({ message: 'El nombre del curso es requerido' });
         }
 
-        if (cursoDuracion && cursoDuracion.length > 100) {
-            return res.status(400).json({ message: 'los caracteres de la descripcion del curso no deben superar los 100 ' });
+        if (cursoDuracion && cursoDuracion.length > 50) {
+            return res.status(400).json({ message: 'La duración del curso no debe superar los 50 caracteres' });
         }
 
-
-        if (cursoCosto < 0) {
-            return res.status(400).json({ message: 'el costo no debe ser negativo' });
+        if (cursoCosto && cursoCosto < 0) {
+            return res.status(400).json({ message: 'El costo no debe ser negativo' });
         }
 
-
-        await pool.execute('UPDATE Cursos SET idProfesional = ?, nombreCurso = ?, cursoDescripcion = ?, cursoDuracion = ?, cursoCosto = ? WHERE idCurso = ?',
-            [idProfesional, nombreCurso, cursoDesc, cursoDuracion, cursoCosto, id]
+        await pool.execute('UPDATE Cursos SET nombreCurso = ?, cursoDescripcion = ?, cursoDuracion = ?, cursoCosto = ? WHERE idCurso = ?',
+            [nombreCurso, cursoDescripcion, cursoDuracion, cursoCosto, id]
         );
 
         if (imagenBase64) {

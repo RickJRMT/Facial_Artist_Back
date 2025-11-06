@@ -6,7 +6,7 @@ class CitasProfesionalController {
     static async getAllCitas(req, res) {
         try {
             const query = `
-                SELECT c.idCita, c.fechaCita, c.horaCita, c.estadoCita, s.servNombre as descripcionServicio, s.servDuracion, p.nombreProfesional
+                SELECT c.idCita, c.fechaCita, c.horaCita, c.estadoCita, c.idProfesional, s.servNombre as descripcionServicio, s.servDuracion, p.nombreProfesional
                 FROM Citas c
                 JOIN Servicios s ON c.idServicios = s.idServicios
                 JOIN Profesional p ON c.idProfesional = p.idProfesional
@@ -45,6 +45,7 @@ class CitasProfesionalController {
                             estado: row.estadoCita,
                             nombreProfesional: row.nombreProfesional,
                             descripcionServicio: row.descripcionServicio,
+                            idProfesional: row.idProfesional, // ← NUEVO: Agregar para frontend
                             fechaLocal: fechaLocal // ← NUEVO: Para debug
                         }
                     };
@@ -72,7 +73,7 @@ class CitasProfesionalController {
             }
 
             const query = `
-                SELECT c.idCita, c.fechaCita, c.horaCita, c.estadoCita, s.servNombre as descripcionServicio, s.servDuracion, p.nombreProfesional
+                SELECT c.idCita, c.fechaCita, c.horaCita, c.estadoCita, c.idProfesional, s.servNombre as descripcionServicio, s.servDuracion, p.nombreProfesional
                 FROM Citas c
                 JOIN Servicios s ON c.idServicios = s.idServicios
                 JOIN Profesional p ON c.idProfesional = p.idProfesional
@@ -112,6 +113,7 @@ class CitasProfesionalController {
                             estado: row.estadoCita,
                             nombreProfesional: row.nombreProfesional,
                             descripcionServicio: row.descripcionServicio,
+                            idProfesional: row.idProfesional, // ← NUEVO: Agregar para frontend
                             fechaLocal: fechaLocal // ← NUEVO
                         }
                     };
@@ -136,7 +138,7 @@ class CitasProfesionalController {
             }
 
             const query = `
-                SELECT c.idCita, c.fechaCita, c.horaCita, c.estadoCita, s.servNombre as descripcionServicio, s.servDuracion, p.nombreProfesional
+                SELECT c.idCita, c.fechaCita, c.horaCita, c.estadoCita, c.idProfesional, s.servNombre as descripcionServicio, s.servDuracion, p.nombreProfesional
                 FROM Citas c
                 JOIN Servicios s ON c.idServicios = s.idServicios
                 JOIN Profesional p ON c.idProfesional = p.idProfesional
