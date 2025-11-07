@@ -23,7 +23,6 @@ class HorariosController {
                 ORDER BY h.fecha, h.hora_inicio
             `;
             const [results] = await db.execute(query);
-            console.log('DEBUG BACKEND All Horarios: Raw results:', results.length);
 
             const eventosHorarios = results
                 .filter(row => row.fecha && row.hora_inicio)
@@ -34,7 +33,6 @@ class HorariosController {
                     const endStr = `${fechaLocal}T${row.hora_fin}`;
                     const startDate = moment(startStr).toDate(); // Local parse
                     if (isNaN(startDate.getTime())) {
-                        console.warn('DEBUG BACKEND All Horarios: Fecha inválida:', row, 'startStr:', startStr);
                         return null;
                     }
                     const className = row.estado === 'activo' ? 'gh-horario-activo' : 'gh-horario-inactivo';
@@ -51,15 +49,12 @@ class HorariosController {
                             estado: row.estado,
                             nombreProfesional: row.nombreProfesional,
                             idHorario: row.idHorario,
-                            fechaLocal: fechaLocal // ← NUEVO: Para debug en frontend
+                            fechaLocal: fechaLocal
                         }
                     };
-                    console.log('DEBUG BACKEND All Horarios: Evento mapeado (local):', evento, 'Raw fecha:', row.fecha, 'Local:', fechaLocal);
                     return evento;
                 })
                 .filter(evento => evento !== null);
-
-            console.log('DEBUG BACKEND All Horarios: Eventos finales:', eventosHorarios.length);
             res.json({ horarios: results, eventosParaCalendario: eventosHorarios });
         } catch (error) {
             console.error('Error al obtener todos los horarios:', error);
@@ -82,7 +77,6 @@ class HorariosController {
                 ORDER BY h.hora_inicio
             `;
             const [results] = await db.execute(query, [fecha]);
-            console.log('DEBUG BACKEND Horarios by Date:', fecha, 'Results:', results.length);
 
             // FIX: Agregar fechaLocal con Moment para consistencia
             const resultsWithLocal = results.map(row => ({
@@ -100,14 +94,11 @@ class HorariosController {
     static async getHorariosByProfesional(req, res) {
         try {
             const { id } = req.params;
-            console.log('DEBUG BACKEND GET: id recibido:', id, 'Tipo:', typeof id);
 
             const idProfesional = Number(id);
             if (!id || isNaN(idProfesional)) {
-                console.log('DEBUG: Validación falló');
                 return res.status(400).json({ error: 'ID de profesional inválido' });
             }
-            console.log('DEBUG BACKEND: idProfesional válido:', idProfesional);
 
             const query = `
                 SELECT idHorario, fecha, hora_inicio, hora_fin, estado, p.nombreProfesional
@@ -134,12 +125,10 @@ class HorariosController {
                     extendedProps: {
                         estado: row.estado,
                         nombreProfesional: row.nombreProfesional,
-                        fechaLocal: fechaLocal // ← NUEVO: Debug
+                        fechaLocal: fechaLocal
                     }
                 };
             });
-
-            console.log('DEBUG: Resultados encontrados:', results.length);
             res.json({ horarios: results, eventosParaCalendario: eventos });
         } catch (error) {
             console.error('Error al obtener horarios:', error);
@@ -150,7 +139,6 @@ class HorariosController {
     // createHorario y updateHorario sin cambios, ya que no mapean eventos
     static async createHorario(req, res) {
         try {
-            console.log('DEBUG BACKEND POST: Body recibido:', req.body);
             const { idProfesional, fecha, hora_inicio, hora_fin, estado = 'activo' } = req.body;
             HorariosController.#validarInputs(idProfesional, fecha, hora_inicio, hora_fin, estado);
 
@@ -174,9 +162,8 @@ class HorariosController {
                 VALUES (?, ?, ?, ?, ?)
             `;
             const [result] = await db.execute(insertQuery, [idProfesional, fecha, hora_inicio, hora_fin, estado]);
-
-            console.log('DEBUG BACKEND: Horario creado con ID:', result.insertId);
             res.status(201).json({ message: 'Horario creado exitosamente', id: result.insertId });
+
         } catch (error) {
             console.error('Error al crear horario:', error);
             res.status(400).json({ error: error.message || 'Error al crear horario' });
@@ -185,7 +172,6 @@ class HorariosController {
 
     static async updateHorario(req, res) {
         try {
-            console.log('DEBUG BACKEND PUT: Params y Body:', req.params, req.body);
             const { id } = req.params;
             const idHorario = Number(id);
             const { idProfesional, fecha, hora_inicio, hora_fin, estado } = req.body;
@@ -232,9 +218,8 @@ class HorariosController {
             if (result.affectedRows === 0) {
                 return res.status(404).json({ error: 'Horario no encontrado' });
             }
-
-            console.log('DEBUG BACKEND: Horario actualizado:', result.affectedRows);
             res.json({ message: 'Horario actualizado exitosamente' });
+
         } catch (error) {
             console.error('Error al actualizar horario:', error);
             res.status(400).json({ error: error.message || 'Error al actualizar horario' });
