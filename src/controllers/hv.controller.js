@@ -85,6 +85,103 @@ class HvController {
             throw error;
         }
     }
+
+    // Obtener información completa de HV con datos relacionados por ID de cliente
+    async obtenerHvCompletaPorCliente(idCliente) {
+        try {
+            const query = `
+                SELECT 
+                    c.idCliente,
+                    c.nombreCliente,
+                    ci.idCita,
+                    ci.fechaCita,
+                    ci.horaCita,
+                    s.servNombre AS servicio,
+                    p.nombreProfesional,
+                    h.idHv,
+                    h.hvDesc,
+                    h.hvFechaCreacion
+                FROM cliente c
+                INNER JOIN citas ci ON c.idCliente = ci.idCliente
+                INNER JOIN hv h ON ci.idCita = h.idCita
+                INNER JOIN profesional p ON ci.idProfesional = p.idProfesional
+                INNER JOIN servicios s ON ci.idServicios = s.idServicios
+                WHERE c.idCliente = ?
+                ORDER BY h.hvFechaCreacion DESC
+            `;
+            
+            const [resultado] = await db.query(query, [idCliente]);
+            
+            return resultado;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    // Obtener información completa de una HV específica por ID de HV
+    async obtenerHvCompletaPorId(idHv) {
+        try {
+            const query = `
+                SELECT 
+                    c.idCliente,
+                    c.nombreCliente,
+                    ci.idCita,
+                    ci.fechaCita,
+                    ci.horaCita,
+                    s.servNombre AS servicio,
+                    p.nombreProfesional,
+                    h.idHv,
+                    h.hvDesc,
+                    h.hvFechaCreacion
+                FROM cliente c
+                INNER JOIN citas ci ON c.idCliente = ci.idCliente
+                INNER JOIN hv h ON ci.idCita = h.idCita
+                INNER JOIN profesional p ON ci.idProfesional = p.idProfesional
+                INNER JOIN servicios s ON ci.idServicios = s.idServicios
+                WHERE h.idHv = ?
+            `;
+            
+            const [resultado] = await db.query(query, [idHv]);
+            
+            if (resultado[0]) {
+                return resultado[0];
+            }
+            return null;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    // Obtener todas las HV con información completa
+    async obtenerTodasHvCompletas() {
+        try {
+            const query = `
+                SELECT 
+                    c.idCliente,
+                    c.nombreCliente,
+                    ci.idCita,
+                    ci.fechaCita,
+                    ci.horaCita,
+                    s.servNombre AS servicio,
+                    p.nombreProfesional,
+                    h.idHv,
+                    h.hvDesc,
+                    h.hvFechaCreacion
+                FROM cliente c
+                INNER JOIN citas ci ON c.idCliente = ci.idCliente
+                INNER JOIN hv h ON ci.idCita = h.idCita
+                INNER JOIN profesional p ON ci.idProfesional = p.idProfesional
+                INNER JOIN servicios s ON ci.idServicios = s.idServicios
+                ORDER BY h.hvFechaCreacion DESC
+            `;
+            
+            const [resultado] = await db.query(query);
+            
+            return resultado;
+        } catch (error) {
+            throw error;
+        }
+    }
 }
 
 module.exports = new HvController();

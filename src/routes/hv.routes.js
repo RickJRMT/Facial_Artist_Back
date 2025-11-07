@@ -106,4 +106,60 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
+// GET /api/hv/completa/todas - Obtener todas las HV con información completa
+router.get('/completa/todas', async (req, res) => {
+    try {
+        const hvs = await HvController.obtenerTodasHvCompletas();
+        res.json({ 
+            success: true, 
+            data: hvs,
+            count: hvs.length 
+        });
+    } catch (error) {
+        console.error('Error al obtener todas las HV completas:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Error interno del servidor' 
+        });
+    }
+});
+
+// GET /api/hv/completa/cliente/:idCliente - Obtener HV completas por ID de cliente
+router.get('/completa/cliente/:idCliente', async (req, res) => {
+    try {
+        const hvs = await HvController.obtenerHvCompletaPorCliente(req.params.idCliente);
+        res.json({ 
+            success: true, 
+            data: hvs,
+            count: hvs.length 
+        });
+    } catch (error) {
+        console.error('Error al obtener HV completas por cliente:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Error interno del servidor' 
+        });
+    }
+});
+
+// GET /api/hv/completa/hv/:idHv - Obtener una HV específica con información completa
+router.get('/completa/hv/:idHv', async (req, res) => {
+    try {
+        const hv = await HvController.obtenerHvCompletaPorId(req.params.idHv);
+        if (!hv) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Hoja de vida no encontrada' 
+            });
+        }
+        res.json({ success: true, data: hv });
+    } catch (error) {
+        console.error('Error al obtener HV completa por ID:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Error interno del servidor' 
+        });
+    }
+});
+
 module.exports = router;
