@@ -45,9 +45,9 @@ class CrudControllerCitas {
                 idCliente = res.insertId; // Obtenemos el ID del nuevo cliente insertado.
             }
 
-            // Obtenemos la duración del servicio seleccionado
+            // Obtenemos la duración y descripción del servicio seleccionado
             const [[servicio]] = await connection.query(
-                `SELECT servDuracion FROM Servicios WHERE idServicios = ?`,
+                `SELECT servDuracion, servDescripcion FROM Servicios WHERE idServicios = ?`,
                 [data.idServicios]
             );
             if (!servicio) {
@@ -99,15 +99,24 @@ class CrudControllerCitas {
                 [idCliente, data.idServicios, data.idProfesional, data.fechaCita, data.horaCita, finCita, data.numeroReferencia]
             );
 
+            const idCita = resCita.insertId;
+
+            // Crear automáticamente la HV asociada a esta cita
+            await connection.query(
+                `INSERT INTO Hv (idCita, hvDesc) VALUES (?, ?)`,
+                [idCita, servicio.servDescripcion || `Historia clínica para ${data.nombreCliente}`]
+            );
+
             // Si todo ha salido bien, confirmamos la transacción
             await connection.commit();
 
             // Devolvemos los datos de la cita creada, incluyendo el ID de la cita y la hora de fin
             return {
-                idCita: resCita.insertId,
+                idCita: idCita,
                 idCliente,
                 ...data,
                 finCita,
+                hvCreada: true // Indicamos que se creó la HV automáticamente
             };
         } catch (error) {
             // Si ocurre un error, deshacemos la transacción para no dejar datos inconsistentes

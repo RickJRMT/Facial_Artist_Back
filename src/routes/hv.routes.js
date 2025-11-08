@@ -162,4 +162,24 @@ router.get('/completa/hv/:idHv', async (req, res) => {
     }
 });
 
+// GET /api/hv/cita/:idCita - Obtener HV por ID de cita
+router.get('/cita/:idCita', async (req, res) => {
+    try {
+        const hv = await HvController.obtenerPorIdCita(req.params.idCita);
+        if (!hv) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Hoja de vida no encontrada para esta cita' 
+            });
+        }
+        res.json({ success: true, data: hv });
+    } catch (error) {
+        console.error('Error al obtener HV por ID de cita:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Error interno del servidor' 
+        });
+    }
+});
+
 module.exports = router;

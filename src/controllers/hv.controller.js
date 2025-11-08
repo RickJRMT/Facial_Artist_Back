@@ -6,10 +6,11 @@ class HvController {
     async obtenerTodos() {
         try {
             const [resultado] = await db.query('SELECT * FROM Hv');
-            // Convertir hvImagen de Buffer a Base64 para el frontend
+            // Convertir hvImagenAntes y hvImagenDespues de Buffer a Base64 para el frontend
             return resultado.map(hv => ({
                 ...hv,
-                hvImagen: hv.hvImagen ? hv.hvImagen.toString('base64') : null
+                hvImagenAntes: hv.hvImagenAntes ? hv.hvImagenAntes.toString('base64') : null,
+                hvImagenDespues: hv.hvImagenDespues ? hv.hvImagenDespues.toString('base64') : null
             }));
         } catch (error) {
             throw error;
@@ -21,10 +22,11 @@ class HvController {
         try {
             const [resultado] = await db.query('SELECT * FROM Hv WHERE idHv = ?', [id]);
             if (resultado[0]) {
-                // Convertir hvImagen de Buffer a Base64
+                // Convertir hvImagenAntes y hvImagenDespues de Buffer a Base64
                 return {
                     ...resultado[0],
-                    hvImagen: resultado[0].hvImagen ? resultado[0].hvImagen.toString('base64') : null
+                    hvImagenAntes: resultado[0].hvImagenAntes ? resultado[0].hvImagenAntes.toString('base64') : null,
+                    hvImagenDespues: resultado[0].hvImagenDespues ? resultado[0].hvImagenDespues.toString('base64') : null
                 };
             }
             return null;
@@ -36,15 +38,22 @@ class HvController {
     // Crear un nuevo registro en Hv
     async crear(data) {
         try {
-            // Convertir hvImagen de Base64 (string desde frontend) a Buffer para MySQL
-            const hvImagen = data.hvImagen ? Buffer.from(data.hvImagen, 'base64') : null;
+            // Convertir imágenes de Base64 (string desde frontend) a Buffer para MySQL
+            const hvImagenAntes = data.hvImagenAntes ? Buffer.from(data.hvImagenAntes, 'base64') : null;
+            const hvImagenDespues = data.hvImagenDespues ? Buffer.from(data.hvImagenDespues, 'base64') : null;
+            
             const [resultado] = await db.query(
-                'INSERT INTO Hv (idCita, hvDesc, servDescripcion, hvImagen) VALUES (?, ?, ?, ?)',
-                [data.idCita, data.hvDesc, data.servDescripcion, hvImagen]
+                'INSERT INTO Hv (idCita, hvDesc, hvImagenAntes, hvImagenDespues) VALUES (?, ?, ?, ?)',
+                [data.idCita, data.hvDesc, hvImagenAntes, hvImagenDespues]
             );
-            // Retorna el registro creado con el nuevo ID (hvImagen como Base64 para consistencia)
+            // Retorna el registro creado con el nuevo ID
             const nuevoId = resultado.insertId;
-            return { ...data, idHv: nuevoId, hvImagen: data.hvImagen || null };
+            return { 
+                ...data, 
+                idHv: nuevoId, 
+                hvImagenAntes: data.hvImagenAntes || null,
+                hvImagenDespues: data.hvImagenDespues || null 
+            };
         } catch (error) {
             throw error;
         }
@@ -57,11 +66,13 @@ class HvController {
             if (!existing) {
                 throw new Error('Registro no encontrado');
             }
-            // Convertir hvImagen de Base64 a Buffer si se proporciona
-            const hvImagen = data.hvImagen ? Buffer.from(data.hvImagen, 'base64') : null;
+            // Convertir imágenes de Base64 a Buffer si se proporcionan
+            const hvImagenAntes = data.hvImagenAntes ? Buffer.from(data.hvImagenAntes, 'base64') : null;
+            const hvImagenDespues = data.hvImagenDespues ? Buffer.from(data.hvImagenDespues, 'base64') : null;
+            
             const [resultado] = await db.query(
-                'UPDATE Hv SET idCita = ?, hvDesc = ?, servDescripcion = ?, hvImagen = ? WHERE idHv = ?',
-                [data.idCita, data.hvDesc, data.servDescripcion, hvImagen, id]
+                'UPDATE Hv SET idCita = ?, hvDesc = ?, hvImagenAntes = ?, hvImagenDespues = ? WHERE idHv = ?',
+                [data.idCita, data.hvDesc, hvImagenAntes, hvImagenDespues, id]
             );
             if (resultado.affectedRows === 0) {
                 throw new Error('No se pudo actualizar el registro');
@@ -178,6 +189,24 @@ class HvController {
             const [resultado] = await db.query(query);
             
             return resultado;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    // Obtener HV por ID de cita
+    async obtenerPorIdCita(idCita) {
+        try {
+            const [resultado] = await db.query('SELECT * FROM Hv WHERE idCita = ?', [idCita]);
+            if (resultado[0]) {
+                // Convertir hvImagenAntes y hvImagenDespues de Buffer a Base64
+                return {
+                    ...resultado[0],
+                    hvImagenAntes: resultado[0].hvImagenAntes ? resultado[0].hvImagenAntes.toString('base64') : null,
+                    hvImagenDespues: resultado[0].hvImagenDespues ? resultado[0].hvImagenDespues.toString('base64') : null
+                };
+            }
+            return null;
         } catch (error) {
             throw error;
         }
