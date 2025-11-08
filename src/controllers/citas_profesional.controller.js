@@ -6,56 +6,27 @@ class CitasProfesionalController {
     static async getAllCitas(req, res) {
         try {
             const query = `
-                SELECT c.idCita, c.fechaCita, c.horaCita, c.estadoCita, c.idProfesional, s.servNombre as descripcionServicio, s.servDuracion, p.nombreProfesional
+                SELECT c.idCita, c.fechaCita, c.horaCita, c.estadoCita, c.idProfesional, 
+                       s.servNombre as descripcionServicio, s.servDuracion, 
+                       p.nombreProfesional, cl.nombreCliente
                 FROM Citas c
                 JOIN Servicios s ON c.idServicios = s.idServicios
                 JOIN Profesional p ON c.idProfesional = p.idProfesional
+                JOIN Cliente cl ON c.idCliente = cl.idCliente
                 ORDER BY c.fechaCita, c.horaCita
             `;
             const [results] = await db.execute(query);
             console.log('DEBUG BACKEND All Citas: Raw results:', results.length);
 
-            const eventosCitas = results
-                .filter(row => row.fechaCita && row.horaCita)
-                .map(row => {
-                    // FIX: Usar Moment para local time (evita merma)
-                    const fechaLocal = moment(row.fechaCita).local().format('YYYY-MM-DD');
-                    const startStr = `${fechaLocal}T${row.horaCita}`;
-                    const startDate = moment(startStr).toDate(); // Local parse
-                    if (isNaN(startDate.getTime())) {
-                        console.warn('DEBUG BACKEND All Citas: Fecha inválida:', row, 'startStr:', startStr);
-                        return null;
-                    }
-                    const endDate = moment(startDate.getTime() + row.servDuracion * 60 * 1000).toDate();
-                    const endStr = moment(endDate).local().format('HH:mm');
-                    const endFullStr = `${fechaLocal}T${endStr}`;
-                    const className = row.estadoCita === 'confirmada' ? 'gh-cita-confirmada' :
-                        row.estadoCita === 'cancelada' ? 'gh-cita-cancelada' : 'gh-cita-agendada';
-                    const evento = {
-                        id: row.idCita,
-                        title: row.nombreProfesional, // Solo nombre pro para cita
-                        start: startStr,
-                        end: endFullStr,
-                        classNames: [className],
-                        backgroundColor: row.estadoCita === 'confirmada' ? '#28a745' :
-                            row.estadoCita === 'cancelada' ? '#dc3545' : '#28a745',
-                        borderColor: row.estadoCita === 'confirmada' ? '#28a745' :
-                            row.estadoCita === 'cancelada' ? '#dc3545' : '#28a745',
-                        extendedProps: {
-                            estado: row.estadoCita,
-                            nombreProfesional: row.nombreProfesional,
-                            descripcionServicio: row.descripcionServicio,
-                            idProfesional: row.idProfesional, // ← NUEVO: Agregar para frontend
-                            fechaLocal: fechaLocal // ← NUEVO: Para debug
-                        }
-                    };
-                    console.log('DEBUG BACKEND All Citas: Evento mapeado (local):', evento, 'Raw fecha:', row.fechaCita, 'Local:', fechaLocal);
-                    return evento;
-                })
-                .filter(evento => evento !== null);
+            // Solo retornar los datos raw con fechaLocal para tabla, NO eventos de calendario
+            const resultsWithLocal = results.map(row => ({
+                ...row,
+                fechaLocal: moment(row.fechaCita).local().format('DD/MM/YYYY')
+            }));
 
-            console.log('DEBUG BACKEND All Citas: Eventos finales:', eventosCitas.length);
-            res.json({ citas: results, eventosParaCalendario: eventosCitas });
+            console.log('DEBUG BACKEND All Citas: Sin mapeo de eventos para calendario');
+            // NO retornamos eventosParaCalendario para ocultar agendamientos del mapeo visual
+            res.json({ citas: resultsWithLocal });
         } catch (error) {
             console.error('Error al obtener todas las citas:', error);
             res.status(500).json({ error: 'Error en la base de datos' });
@@ -73,57 +44,28 @@ class CitasProfesionalController {
             }
 
             const query = `
-                SELECT c.idCita, c.fechaCita, c.horaCita, c.estadoCita, c.idProfesional, s.servNombre as descripcionServicio, s.servDuracion, p.nombreProfesional
+                SELECT c.idCita, c.fechaCita, c.horaCita, c.estadoCita, c.idProfesional, 
+                       s.servNombre as descripcionServicio, s.servDuracion, 
+                       p.nombreProfesional, cl.nombreCliente
                 FROM Citas c
                 JOIN Servicios s ON c.idServicios = s.idServicios
                 JOIN Profesional p ON c.idProfesional = p.idProfesional
+                JOIN Cliente cl ON c.idCliente = cl.idCliente
                 WHERE c.idProfesional = ? 
                 ORDER BY c.fechaCita, c.horaCita
             `;
             const [results] = await db.execute(query, [idProfesional]);
             console.log('DEBUG BACKEND Citas: Raw results from DB:', results.length, results);
 
-            const eventosCitas = results
-                .filter(row => row.fechaCita && row.horaCita)
-                .map(row => {
-                    // FIX: Moment para local time
-                    const fechaLocal = moment(row.fechaCita).local().format('YYYY-MM-DD');
-                    const startStr = `${fechaLocal}T${row.horaCita}`;
-                    const startDate = moment(startStr).toDate();
-                    if (isNaN(startDate.getTime())) {
-                        console.warn('DEBUG BACKEND Citas: Fecha inválida para cita:', row, 'startStr:', startStr);
-                        return null;
-                    }
-                    const endDate = moment(startDate.getTime() + row.servDuracion * 60 * 1000).toDate();
-                    const endStr = moment(endDate).local().format('HH:mm');
-                    const endFullStr = `${fechaLocal}T${endStr}`;
-                    const className = row.estadoCita === 'confirmada' ? 'cita-confirmada' :
-                        row.estadoCita === 'cancelada' ? 'cita-cancelada' : 'cita-pendiente';
-                    const evento = {
-                        id: row.idCita,
-                        title: `${row.nombreProfesional} - ${row.descripcionServicio}`,
-                        start: startStr,
-                        end: endFullStr,
-                        classNames: [className],
-                        backgroundColor: row.estadoCita === 'confirmada' ? '#28a745' :
-                            row.estadoCita === 'cancelada' ? '#dc3545' : '#ffc107',
-                        borderColor: row.estadoCita === 'confirmada' ? '#28a745' :
-                            row.estadoCita === 'cancelada' ? '#dc3545' : '#ffc107',
-                        extendedProps: {
-                            estado: row.estadoCita,
-                            nombreProfesional: row.nombreProfesional,
-                            descripcionServicio: row.descripcionServicio,
-                            idProfesional: row.idProfesional, // ← NUEVO: Agregar para frontend
-                            fechaLocal: fechaLocal // ← NUEVO
-                        }
-                    };
-                    console.log('DEBUG BACKEND Citas: Evento mapeado (local válido):', evento, 'Raw:', row.fechaCita, 'Local:', fechaLocal);
-                    return evento;
-                })
-                .filter(evento => evento !== null);
+            // Solo retornar los datos raw con fechaLocal para tabla, NO eventos de calendario
+            const resultsWithLocal = results.map(row => ({
+                ...row,
+                fechaLocal: moment(row.fechaCita).local().format('DD/MM/YYYY')
+            }));
 
-            console.log('DEBUG BACKEND Citas: Eventos finales:', eventosCitas.length);
-            res.json({ citas: results, eventosParaCalendario: eventosCitas });
+            console.log('DEBUG BACKEND Citas: Sin mapeo de eventos para calendario profesional');
+            // NO retornamos eventosParaCalendario para ocultar agendamientos del mapeo visual
+            res.json({ citas: resultsWithLocal });
         } catch (error) {
             console.error('Error al obtener citas por profesional:', error);
             res.status(500).json({ error: 'Error en la base de datos' });
@@ -138,23 +80,26 @@ class CitasProfesionalController {
             }
 
             const query = `
-                SELECT c.idCita, c.fechaCita, c.horaCita, c.estadoCita, c.idProfesional, s.servNombre as descripcionServicio, s.servDuracion, p.nombreProfesional
+                SELECT c.idCita, c.fechaCita, c.horaCita, c.estadoCita, c.idProfesional, 
+                       s.servNombre as descripcionServicio, s.servDuracion, 
+                       p.nombreProfesional, cl.nombreCliente
                 FROM Citas c
                 JOIN Servicios s ON c.idServicios = s.idServicios
                 JOIN Profesional p ON c.idProfesional = p.idProfesional
+                JOIN Cliente cl ON c.idCliente = cl.idCliente
                 WHERE DATE(c.fechaCita) = ? 
                 ORDER BY c.horaCita
             `;
             const [results] = await db.execute(query, [fecha]);
-            console.log('DEBUG BACKEND Citas by Date:', fecha, 'Results:', results.length);
+            console.log('DEBUG BACKEND Citas by Date:', fecha, 'Results:', results.length, 'con nombres de cliente');
 
-            // FIX: Agregar fechaLocal con Moment
+            // Agregar fechaLocal con Moment y asegurar que nombreCliente esté incluido
             const resultsWithLocal = results.map(row => ({
                 ...row,
                 fechaLocal: moment(row.fechaCita).local().format('DD/MM/YYYY') // Para tabla
             }));
 
-            res.json(resultsWithLocal); // Raw + local
+            res.json(resultsWithLocal); // Raw + local + nombreCliente
         } catch (error) {
             console.error('Error al obtener citas por fecha:', error);
             res.status(500).json({ error: 'Error en la base de datos' });
