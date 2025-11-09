@@ -3,15 +3,51 @@ const moment = require('moment'); // Para manejo local de fechas
 
 class HorariosController {
     static #validarInputs(idProfesional, fecha, hora_inicio, hora_fin, estado) {
-        if (!idProfesional || !fecha || !hora_inicio || !hora_fin) {
-            throw new Error('Faltan campos requeridos');
-        }
-        if (!['activo', 'inactivo'].includes(estado)) {
+        // Validar estado primero
+        if (estado && !['activo', 'inactivo'].includes(estado)) {
             throw new Error('Estado inválido: debe ser "activo" o "inactivo"');
         }
-        if (new Date(`2000-01-01T${hora_inicio}`) >= new Date(`2000-01-01T${hora_fin}`)) {
-            throw new Error('Hora inicio debe ser menor que hora fin');
+
+        // Si se están actualizando horarios, validar el formato
+        if (hora_inicio || hora_fin) {
+            if (!idProfesional || !fecha || !hora_inicio || !hora_fin) {
+                throw new Error('Si se actualizan horarios, todos los campos son requeridos');
+            }
+
+            // Normalizar formato de hora (agregar segundos si no están presentes)
+            hora_inicio = hora_inicio.includes(':') ? 
+                (hora_inicio.split(':').length === 2 ? hora_inicio + ':00' : hora_inicio) : 
+                hora_inicio + ':00:00';
+            
+            hora_fin = hora_fin.includes(':') ? 
+                (hora_fin.split(':').length === 2 ? hora_fin + ':00' : hora_fin) : 
+                hora_fin + ':00:00';
+
+            // Validar formato de hora
+            const horaRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/;
+            if (!horaRegex.test(hora_inicio) || !horaRegex.test(hora_fin)) {
+                throw new Error('Formato de hora inválido. Use HH:MM o HH:MM:SS');
+            }
+
+            if (new Date(`2000-01-01T${hora_inicio}`) >= new Date(`2000-01-01T${hora_fin}`)) {
+                throw new Error('Hora inicio debe ser menor que hora fin');
+            }
         }
+
+        return { hora_inicio, hora_fin }; // Retornar horas normalizadas
+    }
+
+    static async #verificarCitasEnRango(idProfesional, fecha, hora_inicio, hora_fin) {
+        const [citas] = await db.execute(`
+            SELECT idCita, horaCita, fin_cita
+            FROM Citas 
+            WHERE idProfesional = ? 
+            AND fechaCita = ?
+            AND ((horaCita < ? AND (fin_cita IS NULL OR fin_cita > ?))
+            OR (horaCita >= ? AND horaCita < ?))
+        `, [idProfesional, fecha, hora_fin, hora_inicio, hora_inicio, hora_fin]);
+        
+        return citas;
     }
 
     static async getAllHorarios(req, res) {
@@ -176,26 +212,136 @@ class HorariosController {
             const idHorario = Number(id);
             const { idProfesional, fecha, hora_inicio, hora_fin, estado } = req.body;
 
+            console.log('Datos recibidos:', {
+                idHorario,
+                idProfesional,
+                fecha,
+                hora_inicio,
+                hora_fin,
+                estado
+            });
+
             if (!id || isNaN(idHorario)) {
                 return res.status(400).json({ error: 'ID de horario inválido' });
             }
 
-            if (hora_inicio && hora_fin) {
-                HorariosController.#validarInputs(idProfesional || 0, fecha || '', hora_inicio, hora_fin, estado || 'activo');
-                if (estado === 'activo' && idProfesional && fecha) {
-                    const checkQuery = `
-                        SELECT COUNT(*) as count FROM Citas 
-                        WHERE idProfesional = ? AND fechaCita = ? 
-                        AND ((horaCita < ? AND (fin_cita IS NULL OR fin_cita > ?)) OR 
-                             (horaCita >= ? AND horaCita < ?))
-                    `;
-                    const [checkResult] = await db.execute(checkQuery, [idProfesional, fecha, hora_fin, hora_inicio, hora_inicio, hora_fin]);
-                    if (checkResult[0].count > 0) {
-                        return res.status(400).json({ error: 'Solapamiento con citas existentes al actualizar' });
+            // Primero obtenemos el estado actual del horario
+            const [currentHorario] = await db.execute(
+                'SELECT estado FROM Horarios WHERE idHorario = ?',
+                [idHorario]
+            );
+
+            if (!currentHorario || !currentHorario[0]) {
+                return res.status(404).json({ error: 'Horario no encontrado' });
+            }
+
+            const currentEstado = currentHorario[0].estado;
+
+            // Si estamos cambiando el estado
+            if (estado && estado !== currentEstado) {
+                // Si estamos inactivando, verificamos las citas existentes
+                if (estado === 'inactivo') {
+                    const [citasExistentes] = await db.execute(`
+                        SELECT c.* 
+                        FROM Citas c
+                        JOIN Horarios h ON c.idProfesional = h.idProfesional 
+                        AND c.fechaCita = h.fecha
+                        WHERE h.idHorario = ?
+                        AND c.horaCita >= h.hora_inicio 
+                        AND (c.fin_cita IS NULL OR c.fin_cita <= h.hora_fin)
+                    `, [idHorario]);
+
+                    if (citasExistentes.length > 0) {
+                        return res.status(400).json({ 
+                            error: 'No se puede inactivar el horario porque hay citas programadas',
+                            citas: citasExistentes 
+                        });
                     }
-                } else if (estado === 'inactivo') {
-                    console.log('DEBUG BACKEND: Skip solapamiento para estado inactivo en update');
                 }
+            }
+
+            // Obtener el horario actual completo para tener toda la información
+            const [horarioActual] = await db.execute(
+                'SELECT * FROM Horarios WHERE idHorario = ?',
+                [idHorario]
+            );
+
+            if (!horarioActual || !horarioActual[0]) {
+                return res.status(404).json({ error: 'Horario no encontrado' });
+            }
+
+            const horarioData = horarioActual[0];
+            
+            // Usar los valores actuales si no se proporcionan nuevos
+            const updateData = {
+                idProfesional: idProfesional || horarioData.idProfesional,
+                fecha: fecha || horarioData.fecha,
+                hora_inicio: hora_inicio || horarioData.hora_inicio,
+                hora_fin: hora_fin || horarioData.hora_fin,
+                estado: estado || horarioData.estado
+            };
+
+            try {
+                // Validar y normalizar las horas
+                const { hora_inicio: horaInicioNorm, hora_fin: horaFinNorm } = 
+                    HorariosController.#validarInputs(
+                        updateData.idProfesional,
+                        updateData.fecha,
+                        updateData.hora_inicio,
+                        updateData.hora_fin,
+                        updateData.estado
+                    );
+
+                updateData.hora_inicio = horaInicioNorm;
+                updateData.hora_fin = horaFinNorm;
+
+                // Si estamos inactivando, no necesitamos verificar solapamientos
+                if (updateData.estado === 'inactivo') {
+                    // Verificar si hay citas en el rango que se va a inactivar
+                    const [citasAfectadas] = await db.execute(`
+                        SELECT c.* 
+                        FROM Citas c
+                        WHERE c.idProfesional = ? 
+                        AND c.fechaCita = ?
+                        AND c.horaCita >= ?
+                        AND (c.fin_cita IS NULL OR c.fin_cita <= ?)
+                    `, [updateData.idProfesional, updateData.fecha, updateData.hora_inicio, updateData.hora_fin]);
+
+                    if (citasAfectadas.length > 0) {
+                        return res.status(400).json({
+                            error: 'No se puede inactivar el horario porque hay citas programadas',
+                            citas: citasAfectadas
+                        });
+                    }
+                } else if (updateData.estado === 'activo') {
+                    // Solo verificar solapamientos si se está activando o modificando un horario activo
+                    const [solapamientos] = await db.execute(`
+                        SELECT COUNT(*) as count 
+                        FROM Horarios 
+                        WHERE idProfesional = ? 
+                        AND fecha = ? 
+                        AND estado = 'activo'
+                        AND idHorario != ?
+                        AND ((hora_inicio < ? AND hora_fin > ?) 
+                             OR (hora_inicio >= ? AND hora_inicio < ?))
+                    `, [
+                        updateData.idProfesional,
+                        updateData.fecha,
+                        idHorario,
+                        updateData.hora_fin,
+                        updateData.hora_inicio,
+                        updateData.hora_inicio,
+                        updateData.hora_fin
+                    ]);
+
+                    if (solapamientos[0].count > 0) {
+                        return res.status(400).json({ 
+                            error: 'El horario se solapa con otros horarios activos del profesional'
+                        });
+                    }
+                }
+            } catch (validationError) {
+                return res.status(400).json({ error: validationError.message });
             }
 
             const updates = [];
