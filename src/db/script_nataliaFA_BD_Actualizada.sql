@@ -118,11 +118,11 @@ VALUES
 -- Insertar datos en la tabla Citas
 INSERT INTO Citas (idCliente, idServicios, idProfesional, fechaCita, horaCita, estadoPago, estadoCita)
 VALUES 
-(1, 2, 1, '2025-11-20', '10:00:00', 'pendiente', 'pendiente'),
-(2, 1, 2, '2025-11-21', '11:00:00', 'pagado', 'confirmada'),
-(3, 3, 1, '2025-11-22', '09:00:00', 'pendiente', 'cancelada'),
-(4, 4, 3, '2025-11-23', '14:00:00', 'pagado', 'confirmada'),
-(5, 5, 2, '2025-11-24', '16:00:00', 'pendiente', 'pendiente');
+(1, 2, 1, '2025-11-17', '10:00:00', 'pendiente', 'pendiente'),
+(2, 1, 1, '2025-11-18', '11:00:00', 'pagado', 'confirmada'),
+(3, 3, 2, '2025-11-19', '09:00:00', 'pendiente', 'cancelada'),
+(4, 4, 2, '2025-11-20', '14:00:00', 'pagado', 'confirmada'),
+(5, 5, 3, '2025-11-21', '16:00:00', 'pendiente', 'pendiente');
 
 -- Insertar datos en la tabla Hv (informes de citas)
 INSERT INTO Hv (idCita, hvDesc)
@@ -136,12 +136,12 @@ VALUES
 -- Insertar datos en la tabla Horarios
 INSERT INTO Horarios (idProfesional, fecha, hora_inicio, hora_fin, estado)
 VALUES 
-(1, '2025-11-20', '09:00:00', '12:00:00', 'activo'),
-(1, '2025-11-21', '09:00:00', '12:00:00', 'activo'),
-(2, '2025-11-21', '14:00:00', '18:00:00', 'activo'),
-(2, '2025-11-22', '14:00:00', '18:00:00', 'activo'),
-(3, '2025-11-23', '08:00:00', '12:00:00', 'activo'),
-(3, '2025-11-24', '08:00:00', '12:00:00', 'inactivo');
+(1, '2025-11-17', '09:00:00', '12:00:00', 'activo'),
+(1, '2025-11-18', '09:00:00', '12:00:00', 'activo'),
+(2, '2025-11-19', '14:00:00', '18:00:00', 'activo'),
+(2, '2025-11-20', '14:00:00', '18:00:00', 'activo'),
+(3, '2025-11-21', '08:00:00', '12:00:00', 'activo'),
+(3, '2025-11-22', '08:00:00', '12:00:00', 'inactivo');
 
 -- Verificar que se creó correctamente
 SELECT * FROM Servicios;
