@@ -102,10 +102,10 @@ VALUES
 -- Insertar datos en la tabla Servicios
 INSERT INTO Servicios (servNombre, servDescripcion, servCosto, servDuracion)
 VALUES 
-('Facial Revitalizante', 'Tratamiento facial que hidrata y rejuvenece la piel.', 120.00, 60),
-('Limpieza Facial', 'Limpieza profunda para eliminar impurezas de la piel.', 80.00, 45),
-('Mascarilla Reafirmante', 'Mascarilla para reafirmar la piel del rostro.', 100.00, 30),
-('Depilación Facial', 'Eliminación de vello facial con cera caliente.', 40.00, 20),
+('Facial Revitalizante', 'Tratamiento facial que hidrata y rejuvenece la piel.', 120000.00, 60),
+('Limpieza Facial', 'Limpieza profunda para eliminar impurezas de la piel.', 80000.00, 45),
+('Mascarilla Reafirmante', 'Mascarilla para reafirmar la piel del rostro.', 15000.00, 30),
+('Depilación Facial', 'Eliminación de vello facial con cera caliente.', 40000.00, 20),
 ('Mascarilla Antiedad', 'Mascarilla para reducir arrugas y mejorar la elasticidad de la piel.', 150.00, 50);
 
 -- Insertar datos en la tabla Cursos
