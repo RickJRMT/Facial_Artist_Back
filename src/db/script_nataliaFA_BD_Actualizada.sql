@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS Citas (
     FOREIGN KEY (idProfesional) REFERENCES Profesional(idProfesional)
 );
 
--- Tabla Hv
+-- Tabla Hv (modificada con ON DELETE CASCADE para eliminar automáticamente la HV al borrar la cita)
 CREATE TABLE IF NOT EXISTS Hv (
     idHv INT AUTO_INCREMENT PRIMARY KEY,
     idCita INT NOT NULL UNIQUE,
@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS Hv (
     hvFechaCreacion DATETIME DEFAULT CURRENT_TIMESTAMP,
     hvImagenAntes LONGBLOB DEFAULT Null,
     hvImagenDespues LONGBLOB DEFAULT Null,
-    FOREIGN KEY (idCita) REFERENCES Citas(idCita)
+    FOREIGN KEY (idCita) REFERENCES Citas(idCita) ON DELETE CASCADE
 );
 
 -- Tabla Horarios
@@ -83,6 +83,7 @@ CREATE TABLE IF NOT EXISTS Horarios (
     estado ENUM('activo', 'inactivo') NOT NULL, -- Estado del horario: 'activo' o 'bloqueado'
     FOREIGN KEY (idProfesional) REFERENCES Profesional(idProfesional) ON DELETE CASCADE
 );
+
 -- Insertar datos en la tabla Cliente
 INSERT INTO Cliente (nombreCliente, celularCliente, fechaNacCliente) 
 VALUES 
