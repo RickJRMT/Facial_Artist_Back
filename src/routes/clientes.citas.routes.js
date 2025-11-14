@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 
 const CrudControllerCitas = require('../controllers/citas_cliente.controller');
-const crudgenericoController = require('../controllers/crud.controller'); 
+const crudgenericoController = require('../controllers/crud.controller');
 
 // se crea una nueva instancia para utilizar los metodos 
 const crudCitas = new CrudControllerCitas();
@@ -19,7 +19,7 @@ const idCampo = 'idCita';
 router.get('/', async (req, res) => {
     try {
         //utilizar el método obtener todos los datos del controlador para obtener todos los registros 
-        const citas = await crudgenericoController.obtenerTabla(tabla); 
+        const citas = await crudgenericoController.obtenerTabla(tabla);
         //Respuesta con el arreglo de personas en formato JSON
         res.json(citas);
     } catch (error) {
@@ -65,7 +65,7 @@ router.put('/:id', async (req, res) => {
 //ruta para eliminar una persona de la base de datos por id
 router.delete('/:id', async (req, res) => {
     try {
-        const resultado = await  crudgenericoController.eliminar(tabla, idCampo, req.params.id);
+        const resultado = await crudgenericoController.eliminar(tabla, idCampo, req.params.id);
         res.json(resultado);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -74,20 +74,20 @@ router.delete('/:id', async (req, res) => {
 
 // Se creará esté endpoint para obtener los horarios disponibles 
 router.post('/disponibilidad', async (req, res) => {
-  try {
-    const horarios = await crudCitas.obtenerHorariosDisponibles(req.body);
-    res.json(horarios);
-  } catch (error) {
-    console.error('Error al obtener horarios disponibles:', error);
-    res.status(500).json({ error: error.message });
-  }
+    try {
+        const horarios = await crudCitas.obtenerHorariosDisponibles(req.body);
+        res.json(horarios);
+    } catch (error) {
+        console.error('Error al obtener horarios disponibles:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 // Ruta para obtener la fecha de nacimiento de un cliente por celular
 router.get('/fecha-nacimiento/:celular', async (req, res) => {
     try {
         const fecha = await crudCitas.obtenerFechaNacimientoPorCelular(req.params.celular);
-        res.json({ 
-            fechaNacCliente: fecha || null 
+        res.json({
+            fechaNacCliente: fecha || null
         });
     } catch (error) {
         console.error('Error al obtener fecha de nacimiento:', error);
@@ -119,4 +119,20 @@ router.get('/referencia/:ref', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+// Ruta DELETE actualizada para usar método específico de eliminación
+router.delete('/:id', async (req, res) => {
+    try {
+        const resultado = await crudCitas.eliminarCita(req.params.id);
+        res.json(resultado);
+    } catch (error) {
+        console.error('Error detallado al eliminar cita en ruta:', error.message, error.stack); // Log con stack
+        if (error.message.includes('No se encontró')) {
+            res.status(404).json({ error: error.message });
+        } else {
+            res.status(500).json({ error: error.message });
+        }
+    }
+});
+
 module.exports = router; 

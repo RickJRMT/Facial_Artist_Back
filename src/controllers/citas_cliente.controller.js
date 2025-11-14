@@ -368,6 +368,35 @@ class CrudControllerCitas {
             connection.release();
         }
     }
+
+    // Método para eliminar una cita y sus dependencias (Hv)
+    async eliminarCita(idCita) {
+        const connection = await db.getConnection();
+        try {
+            if (!idCita || isNaN(parseInt(idCita))) {
+                throw new Error('ID de cita inválido');
+            }
+
+            await connection.beginTransaction();
+
+            const [citaResult] = await connection.query(`DELETE FROM Citas WHERE idCita = ?`, [parseInt(idCita)]);
+            console.log(`Citas eliminadas para idCita ${idCita}: ${citaResult.affectedRows}`);
+
+            if (citaResult.affectedRows === 0) {
+                throw new Error('No se encontró la cita para eliminar');
+            }
+
+            await connection.commit();
+
+            return { message: 'Cita y HV asociada eliminadas exitosamente' };
+        } catch (error) {
+            await connection.rollback();
+            console.error('Error al eliminar cita:', error.message, error.stack);
+            throw new Error(error.message || 'Error interno al eliminar cita');
+        } finally {
+            connection.release();
+        }
+    }
 }
 
 module.exports = CrudControllerCitas;
